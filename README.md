@@ -56,9 +56,27 @@ clhi-dashboard/
 ├── index.html                              # Landing page
 ├── explore.html                            # Interactive map view
 ├── narrative.html                          # Data story view
+├── data.json                               # All dashboard data (editable)
 ├── CLHI Data Documentation & Methodology.pdf   # Methodology documentation
 └── README.md                               # This file
 ```
+
+## Updating the Data
+
+All dashboard data is stored in `data.json`. To update the data:
+
+1. Open `data.json` in any text editor
+2. Edit the relevant sections:
+   - `fullData` - ZIP code data by year (2015-2023)
+   - `cityTrends` - City-wide annual statistics
+   - `summaryStats` - At-a-glance statistics
+   - `rankings` - Top 5 highest loss ZIP codes
+   - `thenVsNow` - Overdose comparison data
+   - `narrativeBarChart` - Bar chart data by indicator
+   - `bereavementGap` - Historical bereavement data
+3. Save the file and refresh the dashboard
+
+No HTML code changes are needed to update the data.
 
 ## License
 

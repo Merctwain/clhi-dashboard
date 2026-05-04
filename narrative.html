@@ -1006,49 +1006,8 @@
                 <div class="then-now-title">Overdose Deaths: Then vs. Now</div>
                 <div class="then-now-subtitle">Change by ZIP code (2012 → 2023)</div>
                 
-                <div class="then-now-rows">
-                    <div class="then-now-row" data-zip="19134">
-                        <div class="then-now-zip">Kensington<br><span style="font-size:0.65rem;color:#a8a8b0;">19134</span></div>
-                        <div class="then-now-bar then" style="width: 45%;"><span>2.1</span></div>
-                        <div class="then-now-arrow">→</div>
-                        <div class="then-now-bar now" style="width: 100%;"><span>5.59</span></div>
-                        <div class="then-now-change">+166%</div>
-                    </div>
-                    <div class="then-now-row" data-zip="19140">
-                        <div class="then-now-zip">Nicetown<br><span style="font-size:0.65rem;color:#a8a8b0;">19140</span></div>
-                        <div class="then-now-bar then" style="width: 40%;"><span>1.8</span></div>
-                        <div class="then-now-arrow">→</div>
-                        <div class="then-now-bar now" style="width: 86%;"><span>4.82</span></div>
-                        <div class="then-now-change">+168%</div>
-                    </div>
-                    <div class="then-now-row" data-zip="19132">
-                        <div class="then-now-zip">Strawberry M.<br><span style="font-size:0.65rem;color:#a8a8b0;">19132</span></div>
-                        <div class="then-now-bar then" style="width: 35%;"><span>1.5</span></div>
-                        <div class="then-now-arrow">→</div>
-                        <div class="then-now-bar now" style="width: 74%;"><span>4.15</span></div>
-                        <div class="then-now-change">+177%</div>
-                    </div>
-                    <div class="then-now-row" data-zip="19124">
-                        <div class="then-now-zip">Frankford<br><span style="font-size:0.65rem;color:#a8a8b0;">19124</span></div>
-                        <div class="then-now-bar then" style="width: 30%;"><span>1.3</span></div>
-                        <div class="then-now-arrow">→</div>
-                        <div class="then-now-bar now" style="width: 68%;"><span>3.78</span></div>
-                        <div class="then-now-change">+191%</div>
-                    </div>
-                    <div class="then-now-row" data-zip="19143">
-                        <div class="then-now-zip">SW Philly<br><span style="font-size:0.65rem;color:#a8a8b0;">19143</span></div>
-                        <div class="then-now-bar then" style="width: 28%;"><span>1.2</span></div>
-                        <div class="then-now-arrow">→</div>
-                        <div class="then-now-bar now" style="width: 62%;"><span>3.45</span></div>
-                        <div class="then-now-change">+188%</div>
-                    </div>
-                    <div class="then-now-row" data-zip="19118">
-                        <div class="then-now-zip">Chestnut Hill<br><span style="font-size:0.65rem;color:#a8a8b0;">19118</span></div>
-                        <div class="then-now-bar then" style="width: 8%;"><span>0.2</span></div>
-                        <div class="then-now-arrow">→</div>
-                        <div class="then-now-bar now" style="width: 8%;"><span>0.42</span></div>
-                        <div class="then-now-change">+110%</div>
-                    </div>
+                <div class="then-now-rows" id="thenNowRows">
+                    <!-- Then vs Now rows loaded dynamically from data.json -->
                 </div>
                 
                 <div class="then-now-legend">
@@ -1072,91 +1031,13 @@
             <p class="section-subtitle">Key statistics and highest-loss communities</p>
         </div>
         
-        <div class="stats-bar">
-            <div class="stat-card">
-                <div class="stat-value">19134</div>
-                <div class="stat-label">Highest Loss ZIP</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">1,224</div>
-                <div class="stat-label">Overdose Deaths</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">7,019</div>
-                <div class="stat-label">In State Prison</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">1,998</div>
-                <div class="stat-label">Foster Care Entries</div>
-            </div>
-            <div class="stat-card">
-                <div class="stat-value">69x</div>
-                <div class="stat-label">Incarceration Gap</div>
-            </div>
+        <div class="stats-bar" id="statsBar">
+            <!-- Stats loaded dynamically from data.json -->
         </div>
         
-        <div class="rankings-container">
+        <div class="rankings-container" id="rankingsContainer">
             <div class="rankings-title">Top 5 Highest Loss ZIP Codes</div>
-            
-            <div class="ranking-row">
-                <div class="ranking-number">1</div>
-                <div class="ranking-info">
-                    <div class="ranking-neighborhood">Kensington</div>
-                    <div class="ranking-zip">ZIP 19134</div>
-                </div>
-                <div class="ranking-score">
-                    <div class="ranking-score-value">0.72</div>
-                    <div class="ranking-score-label">Loss Index</div>
-                </div>
-            </div>
-            
-            <div class="ranking-row">
-                <div class="ranking-number">2</div>
-                <div class="ranking-info">
-                    <div class="ranking-neighborhood">Nicetown-Tioga</div>
-                    <div class="ranking-zip">ZIP 19140</div>
-                </div>
-                <div class="ranking-score">
-                    <div class="ranking-score-value">0.62</div>
-                    <div class="ranking-score-label">Loss Index</div>
-                </div>
-            </div>
-            
-            <div class="ranking-row">
-                <div class="ranking-number">3</div>
-                <div class="ranking-info">
-                    <div class="ranking-neighborhood">Strawberry Mansion</div>
-                    <div class="ranking-zip">ZIP 19132</div>
-                </div>
-                <div class="ranking-score">
-                    <div class="ranking-score-value">0.58</div>
-                    <div class="ranking-score-label">Loss Index</div>
-                </div>
-            </div>
-            
-            <div class="ranking-row">
-                <div class="ranking-number">4</div>
-                <div class="ranking-info">
-                    <div class="ranking-neighborhood">Frankford</div>
-                    <div class="ranking-zip">ZIP 19124</div>
-                </div>
-                <div class="ranking-score">
-                    <div class="ranking-score-value">0.55</div>
-                    <div class="ranking-score-label">Loss Index</div>
-                </div>
-            </div>
-            
-            <div class="ranking-row">
-                <div class="ranking-number">5</div>
-                <div class="ranking-info">
-                    <div class="ranking-neighborhood">Southwest Philadelphia</div>
-                    <div class="ranking-zip">ZIP 19143</div>
-                </div>
-                <div class="ranking-score">
-                    <div class="ranking-score-value">0.51</div>
-                    <div class="ranking-score-label">Loss Index</div>
-                </div>
-            </div>
+            <!-- Rankings loaded dynamically from data.json -->
         </div>
         
         <div class="cta-box">
@@ -1175,84 +1056,15 @@
     <div class="tooltip" id="tooltip"></div>
     
     <script>
+        // ===========================================
+        // DATA - Loaded from data.json
+        // ===========================================
+        let zipData = {};
+        let summaryStats = {};
+        let rankings = [];
+        let thenVsNow = {};
         const tooltip = document.getElementById('tooltip');
-        
-        // Bar chart data and rendering
-        const zipData = {
-            loss: [
-                { name: 'Kensington', zip: '19134', value: 0.72 },
-                { name: 'Nicetown-Tioga', zip: '19140', value: 0.62 },
-                { name: 'Strawberry Mansion', zip: '19132', value: 0.58 },
-                { name: 'Frankford', zip: '19124', value: 0.55 },
-                { name: 'Southwest Philly', zip: '19143', value: 0.51 },
-                { name: 'Cobbs Creek', zip: '19139', value: 0.46 },
-                { name: 'North Philadelphia', zip: '19121', value: 0.44 },
-                { name: 'Olney', zip: '19120', value: 0.42 },
-                { name: 'Germantown', zip: '19144', value: 0.38 },
-                { name: 'Chestnut Hill', zip: '19118', value: 0.07 }
-            ],
-            overdose: [
-                { name: 'Kensington', zip: '19134', value: 5.59 },
-                { name: 'Nicetown-Tioga', zip: '19140', value: 4.82 },
-                { name: 'Strawberry Mansion', zip: '19132', value: 4.15 },
-                { name: 'Frankford', zip: '19124', value: 3.78 },
-                { name: 'Southwest Philly', zip: '19143', value: 3.45 },
-                { name: 'Cobbs Creek', zip: '19139', value: 3.12 },
-                { name: 'North Philadelphia', zip: '19121', value: 2.89 },
-                { name: 'Olney', zip: '19120', value: 2.45 },
-                { name: 'Germantown', zip: '19144', value: 2.12 },
-                { name: 'Chestnut Hill', zip: '19118', value: 0.42 }
-            ],
-            homicide: [
-                { name: 'Strawberry Mansion', zip: '19132', value: 2.85 },
-                { name: 'Nicetown-Tioga', zip: '19140', value: 2.54 },
-                { name: 'Kensington', zip: '19134', value: 2.10 },
-                { name: 'Southwest Philly', zip: '19143', value: 1.92 },
-                { name: 'Frankford', zip: '19124', value: 1.78 },
-                { name: 'North Philadelphia', zip: '19121', value: 1.65 },
-                { name: 'Cobbs Creek', zip: '19139', value: 1.48 },
-                { name: 'Olney', zip: '19120', value: 1.12 },
-                { name: 'Germantown', zip: '19144', value: 0.95 },
-                { name: 'Chestnut Hill', zip: '19118', value: 0.08 }
-            ],
-            incarceration: [
-                { name: 'Strawberry Mansion', zip: '19132', value: 11.68 },
-                { name: 'North Philly-East', zip: '19133', value: 11.97 },
-                { name: 'Nicetown-Tioga', zip: '19140', value: 9.43 },
-                { name: 'Cobbs Creek', zip: '19139', value: 7.91 },
-                { name: 'North Philadelphia', zip: '19121', value: 7.43 },
-                { name: 'Southwest Philly', zip: '19143', value: 7.23 },
-                { name: 'Kensington', zip: '19134', value: 7.12 },
-                { name: 'Frankford', zip: '19124', value: 5.88 },
-                { name: 'Germantown', zip: '19144', value: 5.79 },
-                { name: 'Chestnut Hill', zip: '19118', value: 0.52 }
-            ],
-            foster: [
-                { name: 'Kensington', zip: '19134', value: 5.66 },
-                { name: 'Nicetown-Tioga', zip: '19140', value: 4.92 },
-                { name: 'Strawberry Mansion', zip: '19132', value: 4.45 },
-                { name: 'Frankford', zip: '19124', value: 4.12 },
-                { name: 'Southwest Philly', zip: '19143', value: 3.72 },
-                { name: 'Cobbs Creek', zip: '19139', value: 3.35 },
-                { name: 'North Philadelphia', zip: '19121', value: 3.08 },
-                { name: 'Olney', zip: '19120', value: 2.65 },
-                { name: 'Germantown', zip: '19144', value: 2.22 },
-                { name: 'Chestnut Hill', zip: '19118', value: 0.38 }
-            ],
-            shooting: [
-                { name: 'Nicetown-Tioga', zip: '19140', value: 1.85 },
-                { name: 'Strawberry Mansion', zip: '19132', value: 1.72 },
-                { name: 'Kensington', zip: '19134', value: 1.58 },
-                { name: 'Southwest Philly', zip: '19143', value: 1.42 },
-                { name: 'Frankford', zip: '19124', value: 1.28 },
-                { name: 'North Philadelphia', zip: '19121', value: 1.15 },
-                { name: 'Cobbs Creek', zip: '19139', value: 0.98 },
-                { name: 'Olney', zip: '19120', value: 0.75 },
-                { name: 'Germantown', zip: '19144', value: 0.58 },
-                { name: 'Chestnut Hill', zip: '19118', value: 0.05 }
-            ]
-        };
-        
+
         const units = {
             loss: 'Index',
             overdose: 'per 1,000',
@@ -1261,7 +1073,10 @@
             foster: 'per 1,000',
             shooting: 'per 1,000'
         };
-        
+
+        // ===========================================
+        // RENDER FUNCTIONS
+        // ===========================================
         function getBarClass(value, max) {
             const ratio = value / max;
             if (ratio > 0.75) return 'bar-high';
@@ -1269,17 +1084,17 @@
             if (ratio > 0.25) return 'bar-medium';
             return 'bar-low';
         }
-        
+
         function renderBarChart(indicator) {
             const data = zipData[indicator];
+            if (!data) return;
             const max = Math.max(...data.map(d => d.value));
             const container = document.getElementById('barChart');
             const unit = units[indicator];
-            
+
             container.innerHTML = data.map(item => {
                 const width = (item.value / max) * 100;
                 const barClass = getBarClass(item.value, max);
-                
                 return `
                     <div class="bar-row" data-zip="${item.zip}" data-value="${item.value}">
                         <div class="bar-label">
@@ -1295,14 +1110,10 @@
                     </div>
                 `;
             }).join('');
-            
-            // Add tooltips
+
             container.querySelectorAll('.bar-row').forEach(row => {
                 row.addEventListener('mouseenter', (e) => {
-                    tooltip.innerHTML = `
-                        <div class="tooltip-title">ZIP ${row.dataset.zip}</div>
-                        <div>Value: <span class="tooltip-value">${parseFloat(row.dataset.value).toFixed(2)} ${unit}</span></div>
-                    `;
+                    tooltip.innerHTML = `<div class="tooltip-title">ZIP ${row.dataset.zip}</div><div>Value: <span class="tooltip-value">${parseFloat(row.dataset.value).toFixed(2)} ${unit}</span></div>`;
                     tooltip.classList.add('visible');
                 });
                 row.addEventListener('mousemove', (e) => {
@@ -1312,76 +1123,137 @@
                 row.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
             });
         }
-        
-        // Indicator buttons
-        document.querySelectorAll('.indicator-btn').forEach(btn => {
-            btn.addEventListener('click', () => {
-                document.querySelectorAll('.indicator-btn').forEach(b => b.classList.remove('active'));
-                btn.classList.add('active');
-                renderBarChart(btn.dataset.indicator);
-            });
-        });
-        
-        // Heartbeat chart interactivity
-        document.querySelectorAll('#blackPoints .data-point').forEach(point => {
-            point.addEventListener('mouseenter', (e) => {
-                const year = point.dataset.year;
-                const black = point.dataset.black;
-                const white = point.dataset.white;
-                const ratio = (parseFloat(black) / parseFloat(white)).toFixed(2);
-                
-                tooltip.innerHTML = `
-                    <div class="tooltip-title">${year}</div>
-                    <div>Black: <span class="tooltip-value">${black}%</span></div>
-                    <div>White: <span class="tooltip-secondary">${white}%</span></div>
-                    <div style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;">
-                        Disparity: <span class="tooltip-value">${ratio}x</span>
+
+        function renderStatsBar() {
+            const container = document.getElementById('statsBar');
+            container.innerHTML = `
+                <div class="stat-card"><div class="stat-value">${summaryStats.highestLossZip}</div><div class="stat-label">Highest Loss ZIP</div></div>
+                <div class="stat-card"><div class="stat-value">${summaryStats.overdoseDeaths.toLocaleString()}</div><div class="stat-label">Overdose Deaths</div></div>
+                <div class="stat-card"><div class="stat-value">${summaryStats.inStatePrison.toLocaleString()}</div><div class="stat-label">In State Prison</div></div>
+                <div class="stat-card"><div class="stat-value">${summaryStats.fosterCareEntries.toLocaleString()}</div><div class="stat-label">Foster Care Entries</div></div>
+                <div class="stat-card"><div class="stat-value">${summaryStats.incarcerationGap}</div><div class="stat-label">Incarceration Gap</div></div>
+            `;
+        }
+
+        function renderRankings() {
+            const container = document.getElementById('rankingsContainer');
+            const title = container.querySelector('.rankings-title');
+            container.innerHTML = '';
+            container.appendChild(title || Object.assign(document.createElement('div'), {className: 'rankings-title', textContent: 'Top 5 Highest Loss ZIP Codes'}));
+
+            rankings.forEach(r => {
+                container.innerHTML += `
+                    <div class="ranking-row">
+                        <div class="ranking-number">${r.rank}</div>
+                        <div class="ranking-info">
+                            <div class="ranking-neighborhood">${r.neighborhood}</div>
+                            <div class="ranking-zip">ZIP ${r.zip}</div>
+                        </div>
+                        <div class="ranking-score">
+                            <div class="ranking-score-value">${r.lossIndex.toFixed(2)}</div>
+                            <div class="ranking-score-label">Loss Index</div>
+                        </div>
                     </div>
                 `;
-                tooltip.classList.add('visible');
             });
-            point.addEventListener('mousemove', (e) => {
-                tooltip.style.left = (e.clientX + 15) + 'px';
-                tooltip.style.top = (e.clientY + 15) + 'px';
-            });
-            point.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
-        });
-        
-        // Grouped bar chart interactivity
-        document.querySelectorAll('.grouped-bar').forEach(bar => {
-            bar.addEventListener('mouseenter', (e) => {
-                tooltip.innerHTML = `
-                    <div class="tooltip-title">ZIP ${bar.dataset.zip}</div>
-                    <div>${bar.dataset.indicator}: <span class="tooltip-value">${bar.dataset.value} per 1,000</span></div>
+        }
+
+        function renderThenVsNow() {
+            const container = document.getElementById('thenNowRows');
+            const maxNow = Math.max(...thenVsNow.data.map(d => d.now));
+
+            container.innerHTML = thenVsNow.data.map(item => {
+                const thenWidth = (item.then / maxNow) * 100;
+                const nowWidth = (item.now / maxNow) * 100;
+                return `
+                    <div class="then-now-row" data-zip="${item.zip}">
+                        <div class="then-now-zip">${item.neighborhood}<br><span style="font-size:0.65rem;color:#a8a8b0;">${item.zip}</span></div>
+                        <div class="then-now-bar then" style="width: ${thenWidth}%;"><span>${item.then}</span></div>
+                        <div class="then-now-arrow">→</div>
+                        <div class="then-now-bar now" style="width: ${nowWidth}%;"><span>${item.now}</span></div>
+                        <div class="then-now-change">${item.change}</div>
+                    </div>
                 `;
-                tooltip.classList.add('visible');
+            }).join('');
+
+            container.querySelectorAll('.then-now-row').forEach(row => {
+                row.addEventListener('mouseenter', (e) => {
+                    tooltip.innerHTML = `<div class="tooltip-title">ZIP ${row.dataset.zip}</div><div>Click for detailed view</div>`;
+                    tooltip.classList.add('visible');
+                });
+                row.addEventListener('mousemove', (e) => {
+                    tooltip.style.left = (e.clientX + 15) + 'px';
+                    tooltip.style.top = (e.clientY + 15) + 'px';
+                });
+                row.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
             });
-            bar.addEventListener('mousemove', (e) => {
-                tooltip.style.left = (e.clientX + 15) + 'px';
-                tooltip.style.top = (e.clientY + 15) + 'px';
+        }
+
+        function setupInteractivity() {
+            // Indicator buttons
+            document.querySelectorAll('.indicator-btn').forEach(btn => {
+                btn.addEventListener('click', () => {
+                    document.querySelectorAll('.indicator-btn').forEach(b => b.classList.remove('active'));
+                    btn.classList.add('active');
+                    renderBarChart(btn.dataset.indicator);
+                });
             });
-            bar.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
-        });
-        
-        // Then vs Now row interactivity
-        document.querySelectorAll('.then-now-row').forEach(row => {
-            row.addEventListener('mouseenter', (e) => {
-                const zip = row.dataset.zip;
-                tooltip.innerHTML = `
-                    <div class="tooltip-title">ZIP ${zip}</div>
-                    <div>Click for detailed view</div>
-                `;
-                tooltip.classList.add('visible');
+
+            // Heartbeat chart interactivity
+            document.querySelectorAll('#blackPoints .data-point').forEach(point => {
+                point.addEventListener('mouseenter', (e) => {
+                    const year = point.dataset.year;
+                    const black = point.dataset.black;
+                    const white = point.dataset.white;
+                    const ratio = (parseFloat(black) / parseFloat(white)).toFixed(2);
+                    tooltip.innerHTML = `<div class="tooltip-title">${year}</div><div>Black: <span class="tooltip-value">${black}%</span></div><div>White: <span class="tooltip-secondary">${white}%</span></div><div style="margin-top:4px;border-top:1px solid rgba(255,255,255,0.1);padding-top:4px;">Disparity: <span class="tooltip-value">${ratio}x</span></div>`;
+                    tooltip.classList.add('visible');
+                });
+                point.addEventListener('mousemove', (e) => {
+                    tooltip.style.left = (e.clientX + 15) + 'px';
+                    tooltip.style.top = (e.clientY + 15) + 'px';
+                });
+                point.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
             });
-            row.addEventListener('mousemove', (e) => {
-                tooltip.style.left = (e.clientX + 15) + 'px';
-                tooltip.style.top = (e.clientY + 15) + 'px';
+
+            // Grouped bar chart interactivity
+            document.querySelectorAll('.grouped-bar').forEach(bar => {
+                bar.addEventListener('mouseenter', (e) => {
+                    tooltip.innerHTML = `<div class="tooltip-title">ZIP ${bar.dataset.zip}</div><div>${bar.dataset.indicator}: <span class="tooltip-value">${bar.dataset.value} per 1,000</span></div>`;
+                    tooltip.classList.add('visible');
+                });
+                bar.addEventListener('mousemove', (e) => {
+                    tooltip.style.left = (e.clientX + 15) + 'px';
+                    tooltip.style.top = (e.clientY + 15) + 'px';
+                });
+                bar.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
             });
-            row.addEventListener('mouseleave', () => tooltip.classList.remove('visible'));
-        });
-        
-        // Initial render
-        renderBarChart('loss');
+        }
+
+        // ===========================================
+        // INIT - Load data from data.json
+        // ===========================================
+        async function initDashboard() {
+            try {
+                const response = await fetch('data.json');
+                const data = await response.json();
+
+                zipData = data.narrativeBarChart;
+                summaryStats = data.summaryStats;
+                rankings = data.rankings;
+                thenVsNow = data.thenVsNow;
+
+                renderBarChart('loss');
+                renderStatsBar();
+                renderRankings();
+                renderThenVsNow();
+                setupInteractivity();
+            } catch (error) {
+                console.error('Error loading data:', error);
+            }
+        }
+
+        initDashboard();
     </script>
 </body>
 </html>
