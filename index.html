@@ -1,0 +1,283 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Community Loss and Hope Index | WWFL Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:wght@400;600;700&family=Source+Sans+Pro:wght@300;400;600;700&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg-dark: #1a1a2e;
+            --bg-card: #16213e;
+            --text-primary: #f5f5f0;
+            --text-secondary: #a8a8b0;
+            --accent-gold: #d4a853;
+            --accent-coral: #e07850;
+            --accent-teal: #6ab0b0;
+        }
+
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+
+        body {
+            font-family: 'Source Sans Pro', -apple-system, BlinkMacSystemFont, sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-primary);
+            min-height: 100vh;
+            display: flex;
+            flex-direction: column;
+        }
+
+        /* Navigation */
+        .nav {
+            background: var(--bg-card);
+            padding: 0.75rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(212, 168, 83, 0.3);
+        }
+
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+
+        .nav-logo {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.1rem;
+            font-weight: 600;
+            color: var(--text-primary);
+        }
+
+        .nav-org {
+            font-size: 0.65rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent-gold);
+            padding-left: 1rem;
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+
+        .nav-links {
+            display: flex;
+            gap: 0.5rem;
+        }
+
+        .nav-link {
+            padding: 0.5rem 1rem;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 6px;
+            color: var(--text-secondary);
+            font-size: 0.8rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+
+        .nav-link:hover {
+            border-color: var(--accent-coral);
+            color: var(--text-primary);
+            background: rgba(224, 120, 80, 0.1);
+        }
+
+        .nav-link.active {
+            background: var(--accent-coral);
+            border-color: var(--accent-coral);
+            color: white;
+        }
+
+        /* Hero Section */
+        .hero {
+            flex: 1;
+            display: flex;
+            flex-direction: column;
+            align-items: center;
+            justify-content: center;
+            text-align: center;
+            padding: 3rem 2rem;
+            background: linear-gradient(180deg, var(--bg-dark) 0%, var(--bg-card) 100%);
+        }
+
+        .hero-label {
+            font-size: 0.7rem;
+            letter-spacing: 0.3em;
+            text-transform: uppercase;
+            color: var(--accent-gold);
+            margin-bottom: 1rem;
+        }
+
+        .hero h1 {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 3rem;
+            font-weight: 700;
+            margin-bottom: 0.5rem;
+            line-height: 1.2;
+        }
+
+        .hero-tagline {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-style: italic;
+            font-size: 1.3rem;
+            color: var(--accent-coral);
+            margin-bottom: 1rem;
+        }
+
+        .hero-subtitle {
+            font-size: 1.1rem;
+            color: var(--text-secondary);
+            max-width: 600px;
+            margin-bottom: 2.5rem;
+            line-height: 1.6;
+        }
+
+        /* Dashboard Cards */
+        .dashboard-options {
+            display: grid;
+            grid-template-columns: repeat(auto-fit, minmax(280px, 1fr));
+            gap: 1.5rem;
+            max-width: 800px;
+            width: 100%;
+        }
+
+        .dashboard-card {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 2rem;
+            text-decoration: none;
+            color: inherit;
+            border: 1px solid rgba(255,255,255,0.1);
+            transition: all 0.3s ease;
+        }
+
+        .dashboard-card:hover {
+            transform: translateY(-4px);
+            border-color: var(--accent-gold);
+            box-shadow: 0 12px 40px rgba(0,0,0,0.3);
+        }
+
+        .card-icon {
+            width: 48px;
+            height: 48px;
+            background: rgba(224, 120, 80, 0.15);
+            border-radius: 10px;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            margin-bottom: 1rem;
+            font-size: 1.5rem;
+        }
+
+        .card-title {
+            font-family: 'Playfair Display', Georgia, serif;
+            font-size: 1.4rem;
+            margin-bottom: 0.5rem;
+        }
+
+        .card-desc {
+            font-size: 0.9rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+            margin-bottom: 1rem;
+        }
+
+        .card-cta {
+            font-size: 0.8rem;
+            color: var(--accent-coral);
+            font-weight: 600;
+            display: flex;
+            align-items: center;
+            gap: 0.5rem;
+        }
+
+        .card-cta::after {
+            content: '\2192';
+        }
+
+        /* Footer */
+        .footer {
+            padding: 1.5rem 2rem;
+            text-align: center;
+            background: var(--bg-card);
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+
+        .footer-org {
+            font-size: 0.9rem;
+            color: var(--text-primary);
+            margin-bottom: 0.3rem;
+        }
+
+        .footer-org a {
+            color: var(--accent-gold);
+            text-decoration: none;
+        }
+
+        .footer-sources {
+            font-size: 0.7rem;
+            color: var(--text-secondary);
+            line-height: 1.5;
+        }
+
+        @media (max-width: 768px) {
+            .hero h1 { font-size: 2rem; }
+            .nav { flex-direction: column; gap: 1rem; }
+            .nav-org { border-left: none; padding-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Navigation -->
+    <nav class="nav">
+        <div class="nav-brand">
+            <span class="nav-logo">CLHI Dashboard</span>
+            <span class="nav-org">Wealth + Work Futures Lab</span>
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link active">Home</a>
+            <a href="explore.html" class="nav-link">Interactive Map</a>
+            <a href="narrative.html" class="nav-link">Data Story</a>
+        </div>
+    </nav>
+
+    <!-- Hero -->
+    <main class="hero">
+        <div class="hero-label">Wealth + Work Futures Lab | Drexel University Lindy Institute</div>
+        <h1>Community Loss &amp; Hope Index</h1>
+        <p class="hero-tagline">"Grief as Sacred Data: Loss and Hope as Design"</p>
+        <p class="hero-subtitle">
+            Mapping community grief across Philadelphia's ZIP codes. Because loss isn't random — it's place-based and persistent.
+        </p>
+
+        <div class="dashboard-options">
+            <a href="explore.html" class="dashboard-card">
+                <div class="card-icon">&#128506;</div>
+                <h2 class="card-title">Interactive Explorer</h2>
+                <p class="card-desc">
+                    Explore Philadelphia ZIP codes through an interactive bubble map. Select indicators, adjust years, and discover geographic patterns in community loss.
+                </p>
+                <span class="card-cta">Launch Explorer</span>
+            </a>
+
+            <a href="narrative.html" class="dashboard-card">
+                <div class="card-icon">&#128202;</div>
+                <h2 class="card-title">Data Story</h2>
+                <p class="card-desc">
+                    A guided narrative through the data — from the bereavement gap to compounding effects. Ideal for presentations and stakeholder briefings.
+                </p>
+                <span class="card-cta">View Story</span>
+            </a>
+        </div>
+    </main>
+
+    <!-- Footer -->
+    <footer class="footer">
+        <p class="footer-org">
+            A project of the <a href="https://wealthworkfutures.org" target="_blank">Wealth + Work Futures Lab</a> at Drexel University's Lindy Institute for Urban Innovation
+        </p>
+        <p class="footer-sources">
+            Data Sources: PA Vital Registration, Philadelphia DHS, Philadelphia Police, PHC4, Prison Policy Initiative, Judi's House CBEM
+        </p>
+    </footer>
+</body>
+</html>

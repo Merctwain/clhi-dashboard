@@ -1,0 +1,1214 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Interactive Map | CLHI Dashboard</title>
+    <link href="https://fonts.googleapis.com/css2?family=Cormorant+Garamond:ital,wght@0,400;0,600;1,400&family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/3.9.1/chart.min.js"></script>
+    <style>
+        :root {
+            --bg-dark: #0a1628;
+            --bg-card: #142238;
+            --bg-panel: #1a2d4a;
+            --accent-coral: #e07a5f;
+            --accent-light: #f4a493;
+            --accent-blue: #4a9eff;
+            --text-light: #e8eef4;
+            --text-muted: #8899aa;
+            --highlight: #f2cc8f;
+            --success: #81b29a;
+            --danger: #e63946;
+        }
+        
+        * { margin: 0; padding: 0; box-sizing: border-box; }
+        
+        body {
+            font-family: 'Inter', sans-serif;
+            background: var(--bg-dark);
+            color: var(--text-light);
+            min-height: 100vh;
+            overflow-x: hidden;
+        }
+        
+        /* Header */
+        .header {
+            padding: 20px 30px 12px;
+            background: linear-gradient(180deg, rgba(20,34,56,0.9) 0%, transparent 100%);
+        }
+        
+        .lab-name {
+            font-size: 0.6rem;
+            letter-spacing: 3px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 4px;
+        }
+        
+        h1 {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.2rem;
+            font-weight: 400;
+            font-style: italic;
+            margin-bottom: 4px;
+        }
+        
+        .subtitle {
+            font-size: 0.85rem;
+            color: var(--text-muted);
+        }
+        
+        .tagline {
+            font-family: 'Cormorant Garamond', serif;
+            font-style: italic;
+            font-size: 0.9rem;
+            color: var(--accent-light);
+        }
+        
+        /* Controls Bar */
+        .controls-bar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            padding: 10px 30px;
+            background: var(--bg-card);
+            border-bottom: 1px solid rgba(255,255,255,0.1);
+            align-items: center;
+        }
+        
+        .control-group {
+            display: flex;
+            flex-direction: column;
+            gap: 4px;
+        }
+        
+        .control-label {
+            font-size: 0.55rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+        }
+        
+        .indicator-buttons {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 5px;
+        }
+        
+        .indicator-btn {
+            padding: 5px 10px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 4px;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .indicator-btn:hover {
+            border-color: var(--accent-coral);
+            color: var(--text-light);
+        }
+        
+        .indicator-btn.active {
+            background: var(--accent-coral);
+            border-color: var(--accent-coral);
+            color: white;
+        }
+        
+        /* Year Control */
+        .year-control {
+            display: flex;
+            align-items: center;
+            gap: 10px;
+            margin-left: auto;
+        }
+        
+        .year-display {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.8rem;
+            font-weight: 600;
+            color: var(--highlight);
+            min-width: 60px;
+        }
+        
+        .year-slider {
+            width: 150px;
+            -webkit-appearance: none;
+            height: 5px;
+            border-radius: 3px;
+            background: var(--bg-panel);
+            outline: none;
+        }
+        
+        .year-slider::-webkit-slider-thumb {
+            -webkit-appearance: none;
+            width: 16px;
+            height: 16px;
+            border-radius: 50%;
+            background: var(--accent-coral);
+            cursor: pointer;
+            border: 2px solid white;
+        }
+        
+        .play-btn {
+            padding: 6px 14px;
+            background: var(--success);
+            border: none;
+            border-radius: 4px;
+            color: white;
+            font-size: 0.75rem;
+            cursor: pointer;
+            font-weight: 600;
+        }
+        
+        .play-btn:hover { background: #6a9e87; }
+        .play-btn.playing { background: var(--danger); }
+        
+        /* Main 3-Column Layout */
+        .main-container {
+            display: grid;
+            grid-template-columns: 280px 1fr 300px;
+            gap: 15px;
+            padding: 15px 20px;
+            min-height: 480px;
+        }
+        
+        /* LEFT - Policy Stats */
+        .policy-panel {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 18px;
+            overflow-y: auto;
+        }
+        
+        .policy-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.2rem;
+            margin-bottom: 4px;
+            color: var(--text-light);
+        }
+        
+        .policy-subtitle {
+            font-size: 0.65rem;
+            color: var(--text-muted);
+            margin-bottom: 15px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+        }
+        
+        .stat-card {
+            background: rgba(255,255,255,0.03);
+            border-radius: 8px;
+            padding: 12px;
+            margin-bottom: 10px;
+            border-left: 3px solid var(--accent-coral);
+        }
+        
+        .stat-card.highlight {
+            border-left-color: var(--danger);
+            background: rgba(230, 57, 70, 0.1);
+        }
+        
+        .stat-card.success {
+            border-left-color: var(--success);
+            background: rgba(129, 178, 154, 0.1);
+        }
+        
+        .stat-card.warning {
+            border-left-color: var(--highlight);
+            background: rgba(242, 204, 143, 0.1);
+        }
+        
+        .stat-number {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.6rem;
+            font-weight: 600;
+            color: var(--text-light);
+            line-height: 1;
+        }
+        
+        .stat-label {
+            font-size: 0.7rem;
+            color: var(--text-muted);
+            margin-top: 4px;
+            line-height: 1.3;
+        }
+        
+        .stat-detail {
+            font-size: 0.65rem;
+            color: var(--accent-light);
+            margin-top: 3px;
+        }
+        
+        /* CENTER - Bubble Map */
+        .map-section {
+            position: relative;
+        }
+        
+        .map-container {
+            position: relative;
+            background: linear-gradient(135deg, var(--bg-card) 0%, var(--bg-panel) 100%);
+            border-radius: 12px;
+            overflow: hidden;
+            height: 100%;
+            min-height: 450px;
+        }
+        
+        .map-title {
+            position: absolute;
+            top: 12px;
+            left: 15px;
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            z-index: 10;
+        }
+        
+        .map-title span { color: var(--text-light); font-weight: 600; }
+        
+        #mapSvg {
+            width: 100%;
+            height: 100%;
+        }
+        
+        .zip-bubble {
+            cursor: pointer;
+            transition: all 0.3s ease;
+            filter: drop-shadow(0 2px 4px rgba(0,0,0,0.3));
+        }
+        
+        .zip-bubble:hover {
+            filter: drop-shadow(0 4px 12px rgba(224,122,95,0.5)) brightness(1.2);
+        }
+        
+        .zip-label {
+            font-size: 7px;
+            fill: rgba(255,255,255,0.9);
+            pointer-events: none;
+            font-weight: 600;
+        }
+        
+        /* Map Legend */
+        .map-legend {
+            position: absolute;
+            bottom: 12px;
+            left: 12px;
+            background: rgba(10,22,40,0.95);
+            padding: 10px;
+            border-radius: 8px;
+            font-size: 0.65rem;
+        }
+        
+        .legend-title {
+            color: var(--text-muted);
+            margin-bottom: 5px;
+            text-transform: uppercase;
+            letter-spacing: 1px;
+            font-size: 0.55rem;
+        }
+        
+        .legend-row {
+            display: flex;
+            align-items: center;
+            gap: 6px;
+            margin-bottom: 8px;
+        }
+        
+        .legend-gradient {
+            width: 60px;
+            height: 6px;
+            border-radius: 3px;
+            background: linear-gradient(90deg, rgba(224,122,95,0.15) 0%, rgba(224,122,95,1) 100%);
+        }
+        
+        .legend-sizes {
+            display: flex;
+            align-items: flex-end;
+            gap: 4px;
+        }
+        
+        .legend-bubble {
+            background: var(--accent-coral);
+            border-radius: 50%;
+            opacity: 0.7;
+        }
+        
+        /* RIGHT PANEL */
+        .right-panel {
+            display: flex;
+            flex-direction: column;
+            gap: 12px;
+        }
+        
+        /* Mini Geographic Map */
+        .mini-map-container {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 12px;
+            height: 200px;
+        }
+        
+        .mini-map-title {
+            font-size: 0.6rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 8px;
+        }
+        
+        #miniMapSvg {
+            width: 100%;
+            height: calc(100% - 20px);
+        }
+        
+        .zip-region {
+            fill: rgba(224,122,95,0.2);
+            stroke: rgba(255,255,255,0.3);
+            stroke-width: 0.5;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .zip-region:hover {
+            fill: rgba(224,122,95,0.5);
+            stroke: white;
+        }
+        
+        .zip-region.selected {
+            fill: var(--accent-coral);
+            stroke: white;
+            stroke-width: 1.5;
+        }
+        
+        /* ZIP Details */
+        .detail-panel {
+            background: var(--bg-card);
+            border-radius: 12px;
+            padding: 15px;
+            flex: 1;
+            overflow-y: auto;
+        }
+        
+        .panel-label {
+            font-size: 0.55rem;
+            letter-spacing: 2px;
+            text-transform: uppercase;
+            color: var(--text-muted);
+            margin-bottom: 3px;
+        }
+        
+        .zip-display {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2.2rem;
+            font-weight: 400;
+            line-height: 1;
+        }
+        
+        .neighborhood-display {
+            font-size: 0.9rem;
+            color: var(--text-muted);
+        }
+        
+        .population-display {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+            margin-top: 2px;
+        }
+        
+        .population-display span {
+            color: var(--highlight);
+            font-weight: 600;
+        }
+        
+        .cli-box {
+            background: var(--accent-coral);
+            border-radius: 8px;
+            padding: 12px;
+            margin: 12px 0;
+        }
+        
+        .cli-label {
+            font-size: 0.55rem;
+            letter-spacing: 1.5px;
+            text-transform: uppercase;
+            opacity: 0.9;
+        }
+        
+        .cli-value {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 2rem;
+            font-weight: 600;
+            line-height: 1;
+        }
+        
+        .indicators-list {
+            display: flex;
+            flex-direction: column;
+        }
+        
+        .indicator-row {
+            display: flex;
+            justify-content: space-between;
+            padding: 6px 0;
+            border-bottom: 1px solid rgba(255,255,255,0.05);
+            font-size: 0.75rem;
+        }
+        
+        .indicator-name { color: var(--text-muted); }
+        .indicator-value { font-weight: 500; }
+        .indicator-unit {
+            color: var(--text-muted);
+            font-weight: 400;
+            font-size: 0.65rem;
+            margin-left: 3px;
+        }
+        
+        /* Trends Section */
+        .trends-section {
+            background: var(--bg-card);
+            margin: 0 20px 20px;
+            border-radius: 12px;
+            padding: 20px;
+        }
+        
+        .trends-header {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 15px;
+            flex-wrap: wrap;
+            gap: 10px;
+        }
+        
+        .trends-title {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1.3rem;
+        }
+        
+        .trends-subtitle {
+            font-size: 0.75rem;
+            color: var(--text-muted);
+        }
+        
+        .trend-view-btns {
+            display: flex;
+            gap: 5px;
+            flex-wrap: wrap;
+        }
+        
+        .trend-view-btn {
+            padding: 5px 10px;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 4px;
+            color: var(--text-muted);
+            font-size: 0.65rem;
+            cursor: pointer;
+            transition: all 0.2s;
+        }
+        
+        .trend-view-btn:hover {
+            border-color: var(--accent-blue);
+            color: var(--text-light);
+        }
+        
+        .trend-view-btn.active {
+            background: var(--accent-blue);
+            border-color: var(--accent-blue);
+            color: white;
+        }
+        
+        .chart-container {
+            position: relative;
+            height: 220px;
+        }
+        
+        .context-markers {
+            display: flex;
+            gap: 15px;
+            margin-top: 12px;
+            padding-top: 12px;
+            border-top: 1px solid rgba(255,255,255,0.1);
+            flex-wrap: wrap;
+        }
+        
+        .context-marker {
+            display: flex;
+            align-items: center;
+            gap: 5px;
+            font-size: 0.65rem;
+            color: var(--text-muted);
+        }
+        
+        .marker-dot {
+            width: 8px;
+            height: 8px;
+            border-radius: 50%;
+        }
+        
+        .marker-dot.covid { background: rgba(230, 57, 70, 0.8); }
+        .marker-dot.policy { background: rgba(242, 204, 143, 0.8); }
+        
+        /* Footer */
+        footer {
+            padding: 15px 30px;
+            text-align: center;
+            color: var(--text-muted);
+            font-size: 0.65rem;
+            border-top: 1px solid rgba(255,255,255,0.05);
+        }
+        
+        footer a { color: var(--accent-light); text-decoration: none; }
+        
+        /* Responsive */
+        @media (max-width: 1200px) {
+            .main-container {
+                grid-template-columns: 1fr 1fr;
+            }
+            .policy-panel {
+                grid-column: 1 / -1;
+                display: grid;
+                grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+                gap: 10px;
+            }
+            .policy-title, .policy-subtitle {
+                grid-column: 1 / -1;
+            }
+        }
+        
+        @media (max-width: 900px) {
+            .main-container {
+                grid-template-columns: 1fr;
+            }
+            .header, .controls-bar, .trends-section {
+                padding-left: 15px;
+                padding-right: 15px;
+            }
+        }
+        /* Site Navigation */
+        .site-nav {
+            background: #0d1929;
+            padding: 0.6rem 2rem;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            border-bottom: 1px solid rgba(224,122,95,0.3);
+        }
+        .nav-brand {
+            display: flex;
+            align-items: center;
+            gap: 1rem;
+        }
+        .nav-logo {
+            font-family: 'Cormorant Garamond', serif;
+            font-size: 1rem;
+            font-weight: 600;
+            color: var(--text-light);
+            text-decoration: none;
+        }
+        .nav-org {
+            font-size: 0.55rem;
+            letter-spacing: 0.15em;
+            text-transform: uppercase;
+            color: var(--accent-coral);
+            padding-left: 1rem;
+            border-left: 1px solid rgba(255,255,255,0.2);
+        }
+        .nav-links {
+            display: flex;
+            gap: 0.4rem;
+        }
+        .nav-link {
+            padding: 0.4rem 0.8rem;
+            background: transparent;
+            border: 1px solid rgba(255,255,255,0.15);
+            border-radius: 4px;
+            color: var(--text-muted);
+            font-size: 0.7rem;
+            text-decoration: none;
+            transition: all 0.2s;
+        }
+        .nav-link:hover {
+            border-color: var(--accent-coral);
+            color: var(--text-light);
+        }
+        .nav-link.active {
+            background: var(--accent-coral);
+            border-color: var(--accent-coral);
+            color: white;
+        }
+        @media (max-width: 600px) {
+            .site-nav { flex-direction: column; gap: 0.5rem; padding: 0.5rem 1rem; }
+            .nav-org { border-left: none; padding-left: 0; }
+        }
+    </style>
+</head>
+<body>
+    <!-- Site Navigation -->
+    <nav class="site-nav">
+        <div class="nav-brand">
+            <a href="index.html" class="nav-logo">CLHI Dashboard</a>
+            <span class="nav-org">Wealth + Work Futures Lab</span>
+        </div>
+        <div class="nav-links">
+            <a href="index.html" class="nav-link">Home</a>
+            <a href="explore.html" class="nav-link active">Interactive Map</a>
+            <a href="narrative.html" class="nav-link">Data Story</a>
+        </div>
+    </nav>
+
+    <header class="header">
+        <div class="lab-name">Wealth + Work Futures Lab | Community Loss and Hope Index</div>
+        <h1>Where Loss Lives</h1>
+        <p class="subtitle">Mapping community grief in Philadelphia — because loss isn't random, it's place-based.</p>
+        <p class="tagline">"Grief as Sacred Data: Loss and Hope as Design"</p>
+    </header>
+    
+    <div class="controls-bar">
+        <div class="control-group">
+            <div class="control-label">Select Indicator (Color)</div>
+            <div class="indicator-buttons">
+                <button class="indicator-btn active" data-indicator="cli">Community Loss Index</button>
+                <button class="indicator-btn" data-indicator="early_death">Early Death</button>
+                <button class="indicator-btn" data-indicator="overdose">Overdose</button>
+                <button class="indicator-btn" data-indicator="homicide">Homicide</button>
+                <button class="indicator-btn" data-indicator="shooting">Shootings</button>
+                <button class="indicator-btn" data-indicator="hospital">Hospital</button>
+                <button class="indicator-btn" data-indicator="foster">Foster Care</button>
+                <button class="indicator-btn" data-indicator="schools">Schools</button>
+            </div>
+        </div>
+        
+        <div class="year-control">
+            <span class="control-label">Year</span>
+            <input type="range" class="year-slider" id="yearSlider" min="2015" max="2023" value="2023">
+            <div class="year-display" id="yearDisplay">2023</div>
+            <button class="play-btn" id="playBtn">▶ Play</button>
+        </div>
+    </div>
+    
+    <div class="main-container">
+        <!-- LEFT: Policy Stats -->
+        <div class="policy-panel">
+            <div class="policy-title">Key Findings</div>
+            <div class="policy-subtitle">Critical insights for policymakers</div>
+            
+            <div class="stat-card highlight">
+                <div class="stat-number">40%</div>
+                <div class="stat-label">of all shootings concentrated in just 5 ZIP codes</div>
+                <div class="stat-detail">19134, 19140, 19132, 19124, 19143</div>
+            </div>
+            
+            <div class="stat-card warning">
+                <div class="stat-number">360</div>
+                <div class="stat-label">schools closed since 2016</div>
+                <div class="stat-detail">305 closed in 2016-17 alone</div>
+            </div>
+            
+            <div class="stat-card highlight">
+                <div class="stat-number">81%</div>
+                <div class="stat-label">spike in homicides during COVID</div>
+                <div class="stat-detail">257 (2019) → 465 (2021)</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-number">80,000+</div>
+                <div class="stat-label">children entered foster care</div>
+                <div class="stat-detail">2015-2023 cumulative</div>
+            </div>
+            
+            <div class="stat-card">
+                <div class="stat-number">9,600+</div>
+                <div class="stat-label">overdose deaths</div>
+                <div class="stat-detail">138% increase since 2015</div>
+            </div>
+            
+            <div class="stat-card success">
+                <div class="stat-number">30%</div>
+                <div class="stat-label">decline in violence since 2021 peak</div>
+                <div class="stat-detail">Both shootings and homicides down</div>
+            </div>
+            
+            <div class="stat-card warning">
+                <div class="stat-number">4 ZIPs</div>
+                <div class="stat-label">rank in top 5 for ALL violence categories</div>
+                <div class="stat-detail">19132, 19134, 19140, 19124</div>
+            </div>
+        </div>
+        
+        <!-- CENTER: Bubble Map -->
+        <div class="map-section">
+            <div class="map-container">
+                <div class="map-title">Philadelphia ZIP Codes | <span id="mapYear">2023</span></div>
+                <svg id="mapSvg" viewBox="0 0 500 420"></svg>
+                
+                <div class="map-legend">
+                    <div class="legend-title">Loss Index (Color)</div>
+                    <div class="legend-row">
+                        <span style="font-size:0.55rem">Low</span>
+                        <div class="legend-gradient"></div>
+                        <span style="font-size:0.55rem">High</span>
+                    </div>
+                    <div class="legend-title">Population (Size)</div>
+                    <div class="legend-sizes">
+                        <div class="legend-bubble" style="width:8px;height:8px;"></div>
+                        <div class="legend-bubble" style="width:14px;height:14px;"></div>
+                        <div class="legend-bubble" style="width:22px;height:22px;"></div>
+                        <span style="font-size:0.55rem;margin-left:3px;">10K-75K</span>
+                    </div>
+                </div>
+            </div>
+        </div>
+        
+        <!-- RIGHT: Mini Map + Details -->
+        <div class="right-panel">
+            <div class="mini-map-container">
+                <div class="mini-map-title">Philadelphia Geography</div>
+                <svg id="miniMapSvg" viewBox="0 0 200 160"></svg>
+            </div>
+            
+            <div class="detail-panel">
+                <div class="panel-label">ZIP Code</div>
+                <div class="zip-display" id="zipDisplay">19132</div>
+                <div class="neighborhood-display" id="neighborhoodDisplay">Strawberry Mansion</div>
+                <div class="population-display">Population: <span id="popDisplay">31,627</span></div>
+                
+                <div class="cli-box">
+                    <div class="cli-label">Community Loss Index</div>
+                    <div class="cli-value" id="cliDisplay">94.3%</div>
+                </div>
+                
+                <div class="panel-label">All Indicators</div>
+                <div class="indicators-list">
+                    <div class="indicator-row">
+                        <span class="indicator-name">Early Death</span>
+                        <span class="indicator-value"><span id="edValue">7.18</span><span class="indicator-unit">per 1,000</span></span>
+                    </div>
+                    <div class="indicator-row">
+                        <span class="indicator-name">Overdose</span>
+                        <span class="indicator-value"><span id="odValue">1.64</span><span class="indicator-unit">per 1,000</span></span>
+                    </div>
+                    <div class="indicator-row">
+                        <span class="indicator-name">Homicide</span>
+                        <span class="indicator-value"><span id="homValue">0.85</span><span class="indicator-unit">per 1,000</span></span>
+                    </div>
+                    <div class="indicator-row">
+                        <span class="indicator-name">Non-Fatal Shooting</span>
+                        <span class="indicator-value"><span id="shootValue">2.91</span><span class="indicator-unit">per 1,000</span></span>
+                    </div>
+                    <div class="indicator-row">
+                        <span class="indicator-name">Hospitalization</span>
+                        <span class="indicator-value"><span id="hospValue">4.96</span><span class="indicator-unit">per 1,000</span></span>
+                    </div>
+                    <div class="indicator-row">
+                        <span class="indicator-name">Foster Care</span>
+                        <span class="indicator-value"><span id="fosterValue">9.45</span><span class="indicator-unit">per 1,000</span></span>
+                    </div>
+                    <div class="indicator-row" style="border-bottom:none;">
+                        <span class="indicator-name">School Closures</span>
+                        <span class="indicator-value" style="color:var(--highlight);"><span id="schoolValue">7</span><span class="indicator-unit">cumulative</span></span>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+    
+    <section class="trends-section">
+        <div class="trends-header">
+            <div>
+                <h2 class="trends-title">City-Wide Trends</h2>
+                <p class="trends-subtitle">Violence and health indicators over time (2015-2023)</p>
+            </div>
+            <div class="trend-view-btns">
+                <button class="trend-view-btn active" data-view="citywide">City-Wide</button>
+                <button class="trend-view-btn" data-view="ziptrend">Selected ZIP</button>
+                <button class="trend-view-btn" data-view="cumulative">Cumulative</button>
+                <button class="trend-view-btn" data-view="yoy">YoY % Change</button>
+            </div>
+        </div>
+        
+        <div class="chart-container">
+            <canvas id="trendsChart"></canvas>
+        </div>
+        
+        <div class="context-markers">
+            <div class="context-marker">
+                <div class="marker-dot covid"></div>
+                <span>COVID-19 Peak (2020-2021)</span>
+            </div>
+            <div class="context-marker">
+                <div class="marker-dot policy"></div>
+                <span>Mass School Closures (2017)</span>
+            </div>
+        </div>
+    </section>
+    
+    <footer>
+        <p>Data: School District of Philadelphia, PA Vital Stats, Philadelphia DHS (2015-2023) | Built by TD Mindpower</p>
+        <p style="margin-top:4px;"><a href="https://wealthworkfutures.org" target="_blank">Wealth + Work Futures Lab</a> at Drexel University</p>
+    </footer>
+
+<script>
+// ===========================================
+// DATA
+// ===========================================
+const fullData = [{"year": 2015, "zip": "19102", "name": "Center City East", "lat": 39.9526, "lng": -75.1652, "population": 4656, "early_death": 0.0, "homicide": 0.0, "overdose": 0.0, "shooting": 0.21, "hospital": 5.15, "foster": 6.01, "schools": 0, "early_death_raw": 0, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 1, "hospital_raw": 24, "foster_raw": 28, "cli": 23.3}, {"year": 2015, "zip": "19103", "name": "Center City West", "lat": 39.9536, "lng": -75.1743, "population": 23154, "early_death": 0.82, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 1.17, "foster": 0.56, "schools": 0, "early_death_raw": 19, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 27, "foster_raw": 13, "cli": 7.1}, {"year": 2015, "zip": "19104", "name": "University City", "lat": 39.9587, "lng": -75.2015, "population": 54718, "early_death": 2.03, "homicide": 0.0, "overdose": 0.27, "shooting": 0.53, "hospital": 1.46, "foster": 7.44, "schools": 0, "early_death_raw": 111, "homicide_raw": 0, "overdose_raw": 15, "shooting_raw": 29, "hospital_raw": 80, "foster_raw": 407, "cli": 31.8}, {"year": 2015, "zip": "19106", "name": "Old City", "lat": 39.947, "lng": -75.1445, "population": 11763, "early_death": 0.0, "homicide": 0.0, "overdose": 0.0, "shooting": 0.09, "hospital": 0.0, "foster": 0.0, "schools": 0, "early_death_raw": 0, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 1, "hospital_raw": 0, "foster_raw": 0, "cli": 0.9}, {"year": 2015, "zip": "19107", "name": "Chinatown", "lat": 39.9519, "lng": -75.1577, "population": 12727, "early_death": 1.57, "homicide": 0.0, "overdose": 0.0, "shooting": 0.24, "hospital": 3.3, "foster": 5.34, "schools": 0, "early_death_raw": 20, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 3, "hospital_raw": 42, "foster_raw": 68, "cli": 23.6}, {"year": 2015, "zip": "19111", "name": "Fox Chase", "lat": 40.0654, "lng": -75.0774, "population": 70453, "early_death": 2.16, "homicide": 0.0, "overdose": 0.18, "shooting": 0.16, "hospital": 1.56, "foster": 2.8, "schools": 0, "early_death_raw": 152, "homicide_raw": 0, "overdose_raw": 13, "shooting_raw": 11, "hospital_raw": 110, "foster_raw": 197, "cli": 21.8}, {"year": 2015, "zip": "19114", "name": "Torresdale", "lat": 40.065, "lng": -75.025, "population": 30677, "early_death": 2.8, "homicide": 0.0, "overdose": 0.46, "shooting": 0.0, "hospital": 1.4, "foster": 1.99, "schools": 0, "early_death_raw": 86, "homicide_raw": 0, "overdose_raw": 14, "shooting_raw": 0, "hospital_raw": 43, "foster_raw": 61, "cli": 28.1}, {"year": 2015, "zip": "19115", "name": "Bustleton", "lat": 40.0896, "lng": -75.0446, "population": 32661, "early_death": 2.08, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 1.71, "foster": 0.61, "schools": 0, "early_death_raw": 68, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 56, "foster_raw": 20, "cli": 13.6}, {"year": 2015, "zip": "19116", "name": "Somerton", "lat": 40.1156, "lng": -75.0156, "population": 33842, "early_death": 2.22, "homicide": 0.0, "overdose": 0.35, "shooting": 0.0, "hospital": 1.6, "foster": 0.62, "schools": 0, "early_death_raw": 75, "homicide_raw": 0, "overdose_raw": 12, "shooting_raw": 0, "hospital_raw": 54, "foster_raw": 21, "cli": 22.4}, {"year": 2015, "zip": "19118", "name": "Chestnut Hill", "lat": 40.0724, "lng": -75.2089, "population": 10123, "early_death": 1.68, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 1.48, "foster": 1.38, "schools": 0, "early_death_raw": 17, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 15, "foster_raw": 14, "cli": 12.2}, {"year": 2015, "zip": "19119", "name": "Mt Airy", "lat": 40.0553, "lng": -75.1893, "population": 28211, "early_death": 2.09, "homicide": 0.0, "overdose": 0.0, "shooting": 0.11, "hospital": 1.67, "foster": 4.82, "schools": 0, "early_death_raw": 59, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 3, "hospital_raw": 47, "foster_raw": 136, "cli": 19.0}, {"year": 2015, "zip": "19120", "name": "Olney", "lat": 40.034, "lng": -75.119, "population": 77534, "early_death": 2.26, "homicide": 0.15, "overdose": 0.19, "shooting": 0.72, "hospital": 1.52, "foster": 6.85, "schools": 0, "early_death_raw": 175, "homicide_raw": 12, "overdose_raw": 15, "shooting_raw": 56, "hospital_raw": 118, "foster_raw": 531, "cli": 32.2}, {"year": 2015, "zip": "19121", "name": "North Central", "lat": 39.9812, "lng": -75.1722, "population": 33045, "early_death": 4.51, "homicide": 0.0, "overdose": 0.61, "shooting": 1.54, "hospital": 3.66, "foster": 19.55, "schools": 0, "early_death_raw": 149, "homicide_raw": 0, "overdose_raw": 20, "shooting_raw": 51, "hospital_raw": 121, "foster_raw": 646, "cli": 78.9}, {"year": 2015, "zip": "19122", "name": "Norris Square", "lat": 39.9812, "lng": -75.1422, "population": 21120, "early_death": 2.89, "homicide": 0.0, "overdose": 0.0, "shooting": 0.95, "hospital": 2.56, "foster": 9.8, "schools": 0, "early_death_raw": 61, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 20, "hospital_raw": 54, "foster_raw": 207, "cli": 38.5}, {"year": 2015, "zip": "19123", "name": "Northern Liberties", "lat": 39.9643, "lng": -75.1492, "population": 13971, "early_death": 2.08, "homicide": 0.0, "overdose": 0.0, "shooting": 1.0, "hospital": 2.43, "foster": 8.3, "schools": 0, "early_death_raw": 29, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 14, "hospital_raw": 34, "foster_raw": 116, "cli": 33.9}, {"year": 2015, "zip": "19124", "name": "Frankford", "lat": 40.0234, "lng": -75.0934, "population": 64803, "early_death": 3.89, "homicide": 0.22, "overdose": 0.45, "shooting": 0.74, "hospital": 2.52, "foster": 11.28, "schools": 0, "early_death_raw": 252, "homicide_raw": 14, "overdose_raw": 29, "shooting_raw": 48, "hospital_raw": 163, "foster_raw": 731, "cli": 52.5}, {"year": 2015, "zip": "19125", "name": "Fishtown", "lat": 39.9753, "lng": -75.1282, "population": 22963, "early_death": 3.61, "homicide": 0.0, "overdose": 0.0, "shooting": 0.26, "hospital": 2.13, "foster": 6.23, "schools": 0, "early_death_raw": 83, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 6, "hospital_raw": 49, "foster_raw": 143, "cli": 29.2}, {"year": 2015, "zip": "19126", "name": "Oak Lane", "lat": 40.0553, "lng": -75.1383, "population": 16398, "early_death": 3.54, "homicide": 0.0, "overdose": 0.0, "shooting": 0.37, "hospital": 3.11, "foster": 9.39, "schools": 0, "early_death_raw": 58, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 6, "hospital_raw": 51, "foster_raw": 154, "cli": 36.2}, {"year": 2015, "zip": "19127", "name": "Manayunk", "lat": 40.0274, "lng": -75.2249, "population": 5889, "early_death": 1.7, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 0.0, "foster": 0.0, "schools": 0, "early_death_raw": 10, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 0, "foster_raw": 0, "cli": 6.6}, {"year": 2015, "zip": "19128", "name": "Roxborough", "lat": 40.0514, "lng": -75.2279, "population": 37582, "early_death": 2.18, "homicide": 0.0, "overdose": 0.35, "shooting": 0.03, "hospital": 1.41, "foster": 2.29, "schools": 0, "early_death_raw": 82, "homicide_raw": 0, "overdose_raw": 13, "shooting_raw": 1, "hospital_raw": 53, "foster_raw": 86, "cli": 23.7}, {"year": 2015, "zip": "19129", "name": "East Falls", "lat": 40.0144, "lng": -75.1893, "population": 11178, "early_death": 2.33, "homicide": 0.0, "overdose": 0.0, "shooting": 0.36, "hospital": 1.7, "foster": 4.83, "schools": 0, "early_death_raw": 26, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 4, "hospital_raw": 19, "foster_raw": 54, "cli": 22.6}, {"year": 2015, "zip": "19130", "name": "Fairmount", "lat": 39.9682, "lng": -75.1762, "population": 26546, "early_death": 1.92, "homicide": 0.0, "overdose": 0.0, "shooting": 0.11, "hospital": 2.07, "foster": 4.29, "schools": 0, "early_death_raw": 51, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 3, "hospital_raw": 55, "foster_raw": 114, "cli": 19.0}, {"year": 2015, "zip": "19131", "name": "Overbrook", "lat": 39.9902, "lng": -75.2249, "population": 41652, "early_death": 3.22, "homicide": 0.31, "overdose": 0.0, "shooting": 0.67, "hospital": 3.1, "foster": 10.16, "schools": 0, "early_death_raw": 134, "homicide_raw": 13, "overdose_raw": 0, "shooting_raw": 28, "hospital_raw": 129, "foster_raw": 423, "cli": 38.8}, {"year": 2015, "zip": "19132", "name": "Strawberry Mansion", "lat": 40.0014, "lng": -75.1722, "population": 36876, "early_death": 5.02, "homicide": 0.54, "overdose": 0.62, "shooting": 1.87, "hospital": 3.85, "foster": 17.82, "schools": 0, "early_death_raw": 185, "homicide_raw": 20, "overdose_raw": 23, "shooting_raw": 69, "hospital_raw": 142, "foster_raw": 657, "cli": 83.3}, {"year": 2015, "zip": "19133", "name": "Hunting Park", "lat": 39.9972, "lng": -75.1342, "population": 26914, "early_death": 4.09, "homicide": 0.48, "overdose": 0.82, "shooting": 2.42, "hospital": 2.49, "foster": 13.71, "schools": 0, "early_death_raw": 110, "homicide_raw": 13, "overdose_raw": 22, "shooting_raw": 65, "hospital_raw": 67, "foster_raw": 369, "cli": 82.1}, {"year": 2015, "zip": "19134", "name": "Kensington", "lat": 39.9953, "lng": -75.1052, "population": 62840, "early_death": 3.49, "homicide": 0.37, "overdose": 0.51, "shooting": 1.83, "hospital": 2.56, "foster": 11.04, "schools": 0, "early_death_raw": 219, "homicide_raw": 23, "overdose_raw": 32, "shooting_raw": 115, "hospital_raw": 161, "foster_raw": 694, "cli": 63.6}, {"year": 2015, "zip": "19135", "name": "Holmesburg", "lat": 40.0254, "lng": -75.0484, "population": 31868, "early_death": 4.08, "homicide": 0.0, "overdose": 0.78, "shooting": 0.35, "hospital": 1.98, "foster": 9.1, "schools": 0, "early_death_raw": 130, "homicide_raw": 0, "overdose_raw": 25, "shooting_raw": 11, "hospital_raw": 63, "foster_raw": 290, "cli": 53.5}, {"year": 2015, "zip": "19136", "name": "Pennypack", "lat": 40.0494, "lng": -75.0234, "population": 33663, "early_death": 3.71, "homicide": 0.0, "overdose": 0.68, "shooting": 0.12, "hospital": 1.66, "foster": 6.03, "schools": 0, "early_death_raw": 125, "homicide_raw": 0, "overdose_raw": 23, "shooting_raw": 4, "hospital_raw": 56, "foster_raw": 203, "cli": 43.2}, {"year": 2015, "zip": "19137", "name": "Bridesburg", "lat": 39.9993, "lng": -75.0724, "population": 7853, "early_death": 4.84, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 1.27, "foster": 4.71, "schools": 0, "early_death_raw": 38, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 10, "foster_raw": 37, "cli": 27.2}, {"year": 2015, "zip": "19138", "name": "West Oak Lane", "lat": 40.0554, "lng": -75.1593, "population": 34159, "early_death": 2.96, "homicide": 0.0, "overdose": 0.29, "shooting": 1.38, "hospital": 2.81, "foster": 11.33, "schools": 0, "early_death_raw": 101, "homicide_raw": 0, "overdose_raw": 10, "shooting_raw": 47, "hospital_raw": 96, "foster_raw": 387, "cli": 52.5}, {"year": 2015, "zip": "19139", "name": "West Philadelphia", "lat": 39.9612, "lng": -75.2289, "population": 43534, "early_death": 3.54, "homicide": 0.3, "overdose": 0.51, "shooting": 1.63, "hospital": 2.87, "foster": 13.9, "schools": 0, "early_death_raw": 154, "homicide_raw": 13, "overdose_raw": 22, "shooting_raw": 71, "hospital_raw": 125, "foster_raw": 605, "cli": 65.5}, {"year": 2015, "zip": "19140", "name": "North Philadelphia", "lat": 40.0124, "lng": -75.1452, "population": 52508, "early_death": 5.18, "homicide": 0.44, "overdose": 0.42, "shooting": 1.71, "hospital": 3.37, "foster": 15.18, "schools": 0, "early_death_raw": 272, "homicide_raw": 23, "overdose_raw": 22, "shooting_raw": 90, "hospital_raw": 177, "foster_raw": 797, "cli": 73.3}, {"year": 2015, "zip": "19141", "name": "Logan", "lat": 40.0374, "lng": -75.1452, "population": 34255, "early_death": 3.07, "homicide": 0.0, "overdose": 0.0, "shooting": 0.99, "hospital": 2.45, "foster": 10.28, "schools": 0, "early_death_raw": 105, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 34, "hospital_raw": 84, "foster_raw": 352, "cli": 39.7}, {"year": 2015, "zip": "19142", "name": "Southwest", "lat": 39.9232, "lng": -75.2319, "population": 28595, "early_death": 3.04, "homicide": 0.0, "overdose": 0.0, "shooting": 0.94, "hospital": 3.08, "foster": 13.11, "schools": 0, "early_death_raw": 87, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 27, "hospital_raw": 88, "foster_raw": 375, "cli": 43.8}, {"year": 2015, "zip": "19143", "name": "Southwest Philly", "lat": 39.9422, "lng": -75.2269, "population": 63553, "early_death": 3.68, "homicide": 0.47, "overdose": 0.3, "shooting": 0.96, "hospital": 2.96, "foster": 10.65, "schools": 0, "early_death_raw": 234, "homicide_raw": 30, "overdose_raw": 19, "shooting_raw": 61, "hospital_raw": 188, "foster_raw": 677, "cli": 51.0}, {"year": 2015, "zip": "19144", "name": "Germantown", "lat": 40.0344, "lng": -75.1753, "population": 41617, "early_death": 4.01, "homicide": 0.0, "overdose": 0.43, "shooting": 0.87, "hospital": 3.39, "foster": 12.54, "schools": 0, "early_death_raw": 167, "homicide_raw": 0, "overdose_raw": 18, "shooting_raw": 36, "hospital_raw": 141, "foster_raw": 522, "cli": 57.7}, {"year": 2015, "zip": "19145", "name": "South Philly West", "lat": 39.9182, "lng": -75.1862, "population": 46758, "early_death": 2.72, "homicide": 0.0, "overdose": 0.28, "shooting": 0.41, "hospital": 2.27, "foster": 6.39, "schools": 0, "early_death_raw": 127, "homicide_raw": 0, "overdose_raw": 13, "shooting_raw": 19, "hospital_raw": 106, "foster_raw": 299, "cli": 34.7}, {"year": 2015, "zip": "19146", "name": "South Philadelphia", "lat": 39.9372, "lng": -75.1772, "population": 37728, "early_death": 2.54, "homicide": 0.0, "overdose": 0.0, "shooting": 0.74, "hospital": 2.44, "foster": 6.28, "schools": 0, "early_death_raw": 96, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 28, "hospital_raw": 92, "foster_raw": 237, "cli": 31.0}, {"year": 2015, "zip": "19147", "name": "Queen Village", "lat": 39.9372, "lng": -75.1542, "population": 37967, "early_death": 1.9, "homicide": 0.0, "overdose": 0.37, "shooting": 0.34, "hospital": 1.32, "foster": 1.29, "schools": 0, "early_death_raw": 72, "homicide_raw": 0, "overdose_raw": 14, "shooting_raw": 13, "hospital_raw": 50, "foster_raw": 49, "cli": 25.0}, {"year": 2015, "zip": "19148", "name": "South Philly East", "lat": 39.9142, "lng": -75.1522, "population": 53979, "early_death": 2.54, "homicide": 0.0, "overdose": 0.37, "shooting": 0.19, "hospital": 1.98, "foster": 2.96, "schools": 0, "early_death_raw": 137, "homicide_raw": 0, "overdose_raw": 20, "shooting_raw": 10, "hospital_raw": 107, "foster_raw": 160, "cli": 29.6}, {"year": 2015, "zip": "19149", "name": "Mayfair", "lat": 40.0394, "lng": -75.0664, "population": 55077, "early_death": 2.29, "homicide": 0.18, "overdose": 0.33, "shooting": 0.13, "hospital": 1.43, "foster": 5.27, "schools": 0, "early_death_raw": 126, "homicide_raw": 10, "overdose_raw": 18, "shooting_raw": 7, "hospital_raw": 79, "foster_raw": 290, "cli": 27.8}, {"year": 2015, "zip": "19150", "name": "Cedarbrook", "lat": 40.0724, "lng": -75.1593, "population": 25031, "early_death": 2.76, "homicide": 0.0, "overdose": 0.0, "shooting": 0.48, "hospital": 2.2, "foster": 4.59, "schools": 0, "early_death_raw": 69, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 12, "hospital_raw": 55, "foster_raw": 115, "cli": 26.7}, {"year": 2015, "zip": "19151", "name": "Overbrook Park", "lat": 39.9782, "lng": -75.2569, "population": 33982, "early_death": 3.03, "homicide": 0.0, "overdose": 0.0, "shooting": 0.68, "hospital": 2.3, "foster": 7.24, "schools": 0, "early_death_raw": 103, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 23, "hospital_raw": 78, "foster_raw": 246, "cli": 32.8}, {"year": 2015, "zip": "19152", "name": "Northeast", "lat": 40.0624, "lng": -75.0464, "population": 34731, "early_death": 2.45, "homicide": 0.0, "overdose": 0.52, "shooting": 0.03, "hospital": 1.38, "foster": 1.5, "schools": 0, "early_death_raw": 85, "homicide_raw": 0, "overdose_raw": 18, "shooting_raw": 1, "hospital_raw": 48, "foster_raw": 52, "cli": 28.0}, {"year": 2015, "zip": "19153", "name": "Eastwick", "lat": 39.8952, "lng": -75.2389, "population": 11925, "early_death": 3.02, "homicide": 0.0, "overdose": 0.0, "shooting": 0.08, "hospital": 2.43, "foster": 5.95, "schools": 0, "early_death_raw": 36, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 1, "hospital_raw": 29, "foster_raw": 71, "cli": 25.7}, {"year": 2015, "zip": "19154", "name": "Far Northeast", "lat": 40.0924, "lng": -74.9864, "population": 34056, "early_death": 2.7, "homicide": 0.0, "overdose": 0.47, "shooting": 0.06, "hospital": 1.47, "foster": 1.76, "schools": 0, "early_death_raw": 92, "homicide_raw": 0, "overdose_raw": 16, "shooting_raw": 2, "hospital_raw": 50, "foster_raw": 60, "cli": 28.6}, {"year": 2016, "zip": "19102", "name": "Center City East", "lat": 39.9526, "lng": -75.1652, "population": 4867, "early_death": 0.0, "homicide": 0.0, "overdose": 0.0, "shooting": 0.41, "hospital": 0.0, "foster": 4.93, "schools": 0, "early_death_raw": 0, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 2, "hospital_raw": 0, "foster_raw": 24, "cli": 9.6}, {"year": 2016, "zip": "19103", "name": "Center City West", "lat": 39.9536, "lng": -75.1743, "population": 22911, "early_death": 1.0, "homicide": 0.0, "overdose": 0.0, "shooting": 0.04, "hospital": 1.44, "foster": 0.0, "schools": 0, "early_death_raw": 23, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 1, "hospital_raw": 33, "foster_raw": 0, "cli": 9.5}, {"year": 2016, "zip": "19104", "name": "University City", "lat": 39.9587, "lng": -75.2015, "population": 54890, "early_death": 1.77, "homicide": 0.0, "overdose": 0.26, "shooting": 0.46, "hospital": 1.55, "foster": 7.67, "schools": 0, "early_death_raw": 97, "homicide_raw": 0, "overdose_raw": 14, "shooting_raw": 25, "hospital_raw": 85, "foster_raw": 421, "cli": 29.9}, {"year": 2016, "zip": "19106", "name": "Old City", "lat": 39.947, "lng": -75.1445, "population": 12095, "early_death": 0.0, "homicide": 0.0, "overdose": 0.0, "shooting": 0.08, "hospital": 1.41, "foster": 0.91, "schools": 0, "early_death_raw": 0, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 1, "hospital_raw": 17, "foster_raw": 11, "cli": 7.3}, {"year": 2016, "zip": "19107", "name": "Chinatown", "lat": 39.9519, "lng": -75.1577, "population": 13464, "early_death": 1.49, "homicide": 0.0, "overdose": 0.0, "shooting": 0.07, "hospital": 2.53, "foster": 5.27, "schools": 0, "early_death_raw": 20, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 1, "hospital_raw": 34, "foster_raw": 71, "cli": 21.5}, {"year": 2016, "zip": "19111", "name": "Fox Chase", "lat": 40.0654, "lng": -75.0774, "population": 69917, "early_death": 2.22, "homicide": 0.0, "overdose": 0.24, "shooting": 0.09, "hospital": 1.06, "foster": 2.37, "schools": 0, "early_death_raw": 155, "homicide_raw": 0, "overdose_raw": 17, "shooting_raw": 6, "hospital_raw": 74, "foster_raw": 166, "cli": 19.5}, {"year": 2016, "zip": "19114", "name": "Torresdale", "lat": 40.065, "lng": -75.025, "population": 30639, "early_death": 2.9, "homicide": 0.0, "overdose": 0.55, "shooting": 0.03, "hospital": 1.6, "foster": 2.28, "schools": 0, "early_death_raw": 89, "homicide_raw": 0, "overdose_raw": 17, "shooting_raw": 1, "hospital_raw": 49, "foster_raw": 70, "cli": 28.7}, {"year": 2016, "zip": "19115", "name": "Bustleton", "lat": 40.0896, "lng": -75.0446, "population": 32583, "early_death": 2.3, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 1.26, "foster": 0.8, "schools": 0, "early_death_raw": 75, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 41, "foster_raw": 26, "cli": 13.7}, {"year": 2016, "zip": "19116", "name": "Somerton", "lat": 40.1156, "lng": -75.0156, "population": 33212, "early_death": 2.68, "homicide": 0.0, "overdose": 0.54, "shooting": 0.03, "hospital": 1.72, "foster": 1.42, "schools": 0, "early_death_raw": 89, "homicide_raw": 0, "overdose_raw": 18, "shooting_raw": 1, "hospital_raw": 57, "foster_raw": 47, "cli": 27.3}, {"year": 2016, "zip": "19118", "name": "Chestnut Hill", "lat": 40.0724, "lng": -75.2089, "population": 10539, "early_death": 0.95, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 0.0, "foster": 0.0, "schools": 0, "early_death_raw": 10, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 0, "foster_raw": 0, "cli": 3.3}, {"year": 2016, "zip": "19119", "name": "Mt Airy", "lat": 40.0553, "lng": -75.1893, "population": 28605, "early_death": 2.41, "homicide": 0.0, "overdose": 0.0, "shooting": 0.1, "hospital": 1.85, "foster": 3.92, "schools": 0, "early_death_raw": 69, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 3, "hospital_raw": 53, "foster_raw": 112, "cli": 20.9}, {"year": 2016, "zip": "19120", "name": "Olney", "lat": 40.034, "lng": -75.119, "population": 76459, "early_death": 2.72, "homicide": 0.21, "overdose": 0.29, "shooting": 0.54, "hospital": 1.53, "foster": 7.22, "schools": 0, "early_death_raw": 208, "homicide_raw": 16, "overdose_raw": 22, "shooting_raw": 41, "hospital_raw": 117, "foster_raw": 552, "cli": 34.0}, {"year": 2016, "zip": "19121", "name": "North Central", "lat": 39.9812, "lng": -75.1722, "population": 32651, "early_death": 4.23, "homicide": 0.49, "overdose": 0.46, "shooting": 1.9, "hospital": 2.91, "foster": 18.53, "schools": 0, "early_death_raw": 138, "homicide_raw": 16, "overdose_raw": 15, "shooting_raw": 62, "hospital_raw": 95, "foster_raw": 605, "cli": 74.1}, {"year": 2016, "zip": "19122", "name": "Norris Square", "lat": 39.9812, "lng": -75.1422, "population": 22076, "early_death": 2.26, "homicide": 0.0, "overdose": 0.0, "shooting": 0.5, "hospital": 2.54, "foster": 9.92, "schools": 0, "early_death_raw": 50, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 11, "hospital_raw": 56, "foster_raw": 219, "cli": 33.7}, {"year": 2016, "zip": "19123", "name": "Northern Liberties", "lat": 39.9643, "lng": -75.1492, "population": 14824, "early_death": 3.17, "homicide": 0.0, "overdose": 0.0, "shooting": 0.61, "hospital": 1.89, "foster": 7.35, "schools": 0, "early_death_raw": 47, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 9, "hospital_raw": 28, "foster_raw": 109, "cli": 32.7}, {"year": 2016, "zip": "19124", "name": "Frankford", "lat": 40.0234, "lng": -75.0934, "population": 69125, "early_death": 3.7, "homicide": 0.23, "overdose": 0.39, "shooting": 1.13, "hospital": 2.29, "foster": 12.22, "schools": 0, "early_death_raw": 256, "homicide_raw": 16, "overdose_raw": 27, "shooting_raw": 78, "hospital_raw": 158, "foster_raw": 845, "cli": 53.7}, {"year": 2016, "zip": "19125", "name": "Fishtown", "lat": 39.9753, "lng": -75.1282, "population": 24504, "early_death": 2.73, "homicide": 0.0, "overdose": 0.78, "shooting": 0.16, "hospital": 2.33, "foster": 6.61, "schools": 0, "early_death_raw": 67, "homicide_raw": 0, "overdose_raw": 19, "shooting_raw": 4, "hospital_raw": 57, "foster_raw": 162, "cli": 41.1}, {"year": 2016, "zip": "19126", "name": "Oak Lane", "lat": 40.0553, "lng": -75.1383, "population": 15339, "early_death": 4.37, "homicide": 0.0, "overdose": 0.0, "shooting": 0.52, "hospital": 3.19, "foster": 9.19, "schools": 0, "early_death_raw": 67, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 8, "hospital_raw": 49, "foster_raw": 141, "cli": 43.0}, {"year": 2016, "zip": "19127", "name": "Manayunk", "lat": 40.0274, "lng": -75.2249, "population": 6263, "early_death": 0.0, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 0.0, "foster": 0.0, "schools": 0, "early_death_raw": 0, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 0, "foster_raw": 0, "cli": 0.0}, {"year": 2016, "zip": "19128", "name": "Roxborough", "lat": 40.0514, "lng": -75.2279, "population": 36958, "early_death": 1.89, "homicide": 0.0, "overdose": 0.35, "shooting": 0.0, "hospital": 1.33, "foster": 2.14, "schools": 0, "early_death_raw": 70, "homicide_raw": 0, "overdose_raw": 13, "shooting_raw": 0, "hospital_raw": 49, "foster_raw": 79, "cli": 20.2}, {"year": 2016, "zip": "19129", "name": "East Falls", "lat": 40.0144, "lng": -75.1893, "population": 11018, "early_death": 2.18, "homicide": 0.0, "overdose": 0.0, "shooting": 0.27, "hospital": 1.82, "foster": 5.26, "schools": 0, "early_death_raw": 24, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 3, "hospital_raw": 20, "foster_raw": 58, "cli": 23.2}, {"year": 2016, "zip": "19130", "name": "Fairmount", "lat": 39.9682, "lng": -75.1762, "population": 26765, "early_death": 1.98, "homicide": 0.0, "overdose": 0.0, "shooting": 0.07, "hospital": 1.76, "foster": 3.96, "schools": 0, "early_death_raw": 53, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 2, "hospital_raw": 47, "foster_raw": 106, "cli": 18.7}, {"year": 2016, "zip": "19131", "name": "Overbrook", "lat": 39.9902, "lng": -75.2249, "population": 41797, "early_death": 3.73, "homicide": 0.0, "overdose": 0.38, "shooting": 0.72, "hospital": 2.87, "foster": 9.5, "schools": 0, "early_death_raw": 156, "homicide_raw": 0, "overdose_raw": 16, "shooting_raw": 30, "hospital_raw": 120, "foster_raw": 397, "cli": 48.6}, {"year": 2016, "zip": "19132", "name": "Strawberry Mansion", "lat": 40.0014, "lng": -75.1722, "population": 34590, "early_death": 5.78, "homicide": 0.72, "overdose": 0.66, "shooting": 2.37, "hospital": 3.73, "foster": 17.78, "schools": 0, "early_death_raw": 200, "homicide_raw": 25, "overdose_raw": 23, "shooting_raw": 82, "hospital_raw": 129, "foster_raw": 615, "cli": 90.3}, {"year": 2016, "zip": "19133", "name": "Hunting Park", "lat": 39.9972, "lng": -75.1342, "population": 26811, "early_death": 4.59, "homicide": 0.45, "overdose": 0.9, "shooting": 2.31, "hospital": 2.69, "foster": 14.06, "schools": 0, "early_death_raw": 123, "homicide_raw": 12, "overdose_raw": 24, "shooting_raw": 62, "hospital_raw": 72, "foster_raw": 377, "cli": 81.7}, {"year": 2016, "zip": "19134", "name": "Kensington", "lat": 39.9953, "lng": -75.1052, "population": 64089, "early_death": 4.54, "homicide": 0.3, "overdose": 1.09, "shooting": 1.39, "hospital": 2.7, "foster": 12.89, "schools": 0, "early_death_raw": 291, "homicide_raw": 19, "overdose_raw": 70, "shooting_raw": 89, "hospital_raw": 173, "foster_raw": 826, "cli": 74.0}, {"year": 2016, "zip": "19135", "name": "Holmesburg", "lat": 40.0254, "lng": -75.0484, "population": 31599, "early_death": 4.53, "homicide": 0.0, "overdose": 1.14, "shooting": 0.38, "hospital": 2.15, "foster": 10.0, "schools": 0, "early_death_raw": 143, "homicide_raw": 0, "overdose_raw": 36, "shooting_raw": 12, "hospital_raw": 68, "foster_raw": 316, "cli": 58.9}, {"year": 2016, "zip": "19136", "name": "Pennypack", "lat": 40.0494, "lng": -75.0234, "population": 33656, "early_death": 4.07, "homicide": 0.0, "overdose": 0.95, "shooting": 0.12, "hospital": 1.96, "foster": 7.43, "schools": 0, "early_death_raw": 137, "homicide_raw": 0, "overdose_raw": 32, "shooting_raw": 4, "hospital_raw": 66, "foster_raw": 250, "cli": 47.7}, {"year": 2016, "zip": "19137", "name": "Bridesburg", "lat": 39.9993, "lng": -75.0724, "population": 8284, "early_death": 4.35, "homicide": 0.0, "overdose": 0.0, "shooting": 0.72, "hospital": 2.05, "foster": 5.79, "schools": 0, "early_death_raw": 36, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 6, "hospital_raw": 17, "foster_raw": 48, "cli": 36.9}, {"year": 2016, "zip": "19138", "name": "West Oak Lane", "lat": 40.0554, "lng": -75.1593, "population": 33808, "early_death": 3.46, "homicide": 0.35, "overdose": 0.0, "shooting": 1.33, "hospital": 2.51, "foster": 10.88, "schools": 0, "early_death_raw": 117, "homicide_raw": 12, "overdose_raw": 0, "shooting_raw": 45, "hospital_raw": 85, "foster_raw": 368, "cli": 47.5}, {"year": 2016, "zip": "19139", "name": "West Philadelphia", "lat": 39.9612, "lng": -75.2289, "population": 43499, "early_death": 4.62, "homicide": 0.37, "overdose": 0.46, "shooting": 1.31, "hospital": 3.84, "foster": 13.4, "schools": 0, "early_death_raw": 201, "homicide_raw": 16, "overdose_raw": 20, "shooting_raw": 57, "hospital_raw": 167, "foster_raw": 583, "cli": 67.3}, {"year": 2016, "zip": "19140", "name": "North Philadelphia", "lat": 40.0124, "lng": -75.1452, "population": 51132, "early_death": 4.48, "homicide": 0.51, "overdose": 0.47, "shooting": 2.33, "hospital": 3.81, "foster": 15.16, "schools": 0, "early_death_raw": 229, "homicide_raw": 26, "overdose_raw": 24, "shooting_raw": 119, "hospital_raw": 195, "foster_raw": 775, "cli": 79.6}, {"year": 2016, "zip": "19141", "name": "Logan", "lat": 40.0374, "lng": -75.1452, "population": 34316, "early_death": 3.85, "homicide": 0.0, "overdose": 0.35, "shooting": 0.82, "hospital": 2.45, "foster": 10.32, "schools": 0, "early_death_raw": 132, "homicide_raw": 0, "overdose_raw": 12, "shooting_raw": 28, "hospital_raw": 84, "foster_raw": 354, "cli": 48.8}, {"year": 2016, "zip": "19142", "name": "Southwest", "lat": 39.9232, "lng": -75.2319, "population": 28221, "early_death": 3.93, "homicide": 0.0, "overdose": 0.0, "shooting": 0.99, "hospital": 2.98, "foster": 12.51, "schools": 0, "early_death_raw": 111, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 28, "hospital_raw": 84, "foster_raw": 353, "cli": 49.2}, {"year": 2016, "zip": "19143", "name": "Southwest Philly", "lat": 39.9422, "lng": -75.2269, "population": 63518, "early_death": 3.5, "homicide": 0.38, "overdose": 0.39, "shooting": 0.93, "hospital": 3.24, "foster": 10.42, "schools": 0, "early_death_raw": 222, "homicide_raw": 24, "overdose_raw": 25, "shooting_raw": 59, "hospital_raw": 206, "foster_raw": 662, "cli": 52.7}, {"year": 2016, "zip": "19144", "name": "Germantown", "lat": 40.0344, "lng": -75.1753, "population": 40613, "early_death": 4.16, "homicide": 0.25, "overdose": 0.39, "shooting": 0.91, "hospital": 2.63, "foster": 12.66, "schools": 0, "early_death_raw": 169, "homicide_raw": 10, "overdose_raw": 16, "shooting_raw": 37, "hospital_raw": 107, "foster_raw": 514, "cli": 54.8}, {"year": 2016, "zip": "19145", "name": "South Philly West", "lat": 39.9182, "lng": -75.1862, "population": 47900, "early_death": 3.4, "homicide": 0.0, "overdose": 0.56, "shooting": 0.71, "hospital": 2.11, "foster": 5.43, "schools": 0, "early_death_raw": 163, "homicide_raw": 0, "overdose_raw": 27, "shooting_raw": 34, "hospital_raw": 101, "foster_raw": 260, "cli": 43.2}, {"year": 2016, "zip": "19146", "name": "South Philadelphia", "lat": 39.9372, "lng": -75.1772, "population": 37233, "early_death": 2.79, "homicide": 0.0, "overdose": 0.27, "shooting": 0.97, "hospital": 2.31, "foster": 6.07, "schools": 0, "early_death_raw": 104, "homicide_raw": 0, "overdose_raw": 10, "shooting_raw": 36, "hospital_raw": 86, "foster_raw": 226, "cli": 40.2}, {"year": 2016, "zip": "19147", "name": "Queen Village", "lat": 39.9372, "lng": -75.1542, "population": 38848, "early_death": 1.39, "homicide": 0.0, "overdose": 0.28, "shooting": 0.15, "hospital": 1.44, "foster": 1.57, "schools": 0, "early_death_raw": 54, "homicide_raw": 0, "overdose_raw": 11, "shooting_raw": 6, "hospital_raw": 56, "foster_raw": 61, "cli": 18.6}, {"year": 2016, "zip": "19148", "name": "South Philly East", "lat": 39.9142, "lng": -75.1522, "population": 53870, "early_death": 2.82, "homicide": 0.0, "overdose": 0.8, "shooting": 0.19, "hospital": 2.08, "foster": 2.78, "schools": 0, "early_death_raw": 152, "homicide_raw": 0, "overdose_raw": 43, "shooting_raw": 10, "hospital_raw": 112, "foster_raw": 150, "cli": 36.9}, {"year": 2016, "zip": "19149", "name": "Mayfair", "lat": 40.0394, "lng": -75.0664, "population": 56933, "early_death": 2.18, "homicide": 0.0, "overdose": 0.35, "shooting": 0.3, "hospital": 1.49, "foster": 5.2, "schools": 0, "early_death_raw": 124, "homicide_raw": 0, "overdose_raw": 20, "shooting_raw": 17, "hospital_raw": 85, "foster_raw": 296, "cli": 28.3}, {"year": 2016, "zip": "19150", "name": "Cedarbrook", "lat": 40.0724, "lng": -75.1593, "population": 24376, "early_death": 2.91, "homicide": 0.0, "overdose": 0.0, "shooting": 0.25, "hospital": 1.72, "foster": 3.98, "schools": 0, "early_death_raw": 71, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 6, "hospital_raw": 42, "foster_raw": 97, "cli": 23.7}, {"year": 2016, "zip": "19151", "name": "Overbrook Park", "lat": 39.9782, "lng": -75.2569, "population": 34391, "early_death": 2.68, "homicide": 0.0, "overdose": 0.0, "shooting": 0.55, "hospital": 1.6, "foster": 6.57, "schools": 0, "early_death_raw": 92, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 19, "hospital_raw": 55, "foster_raw": 226, "cli": 28.4}, {"year": 2016, "zip": "19152", "name": "Northeast", "lat": 40.0624, "lng": -75.0464, "population": 34887, "early_death": 2.75, "homicide": 0.0, "overdose": 0.54, "shooting": 0.09, "hospital": 1.12, "foster": 2.24, "schools": 0, "early_death_raw": 96, "homicide_raw": 0, "overdose_raw": 19, "shooting_raw": 3, "hospital_raw": 39, "foster_raw": 78, "cli": 26.7}, {"year": 2016, "zip": "19153", "name": "Eastwick", "lat": 39.8952, "lng": -75.2389, "population": 12789, "early_death": 2.5, "homicide": 0.0, "overdose": 0.0, "shooting": 0.47, "hospital": 2.03, "foster": 5.63, "schools": 0, "early_death_raw": 32, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 6, "hospital_raw": 26, "foster_raw": 72, "cli": 27.6}, {"year": 2016, "zip": "19154", "name": "Far Northeast", "lat": 40.0924, "lng": -74.9864, "population": 33159, "early_death": 2.65, "homicide": 0.0, "overdose": 0.48, "shooting": 0.06, "hospital": 1.45, "foster": 2.11, "schools": 0, "early_death_raw": 88, "homicide_raw": 0, "overdose_raw": 16, "shooting_raw": 2, "hospital_raw": 48, "foster_raw": 70, "cli": 26.2}, {"year": 2017, "zip": "19102", "name": "Center City East", "lat": 39.9526, "lng": -75.1652, "population": 5042, "early_death": 0.0, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 3.37, "foster": 5.36, "schools": 1, "early_death_raw": 0, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 17, "foster_raw": 27, "cli": 16.3}, {"year": 2017, "zip": "19103", "name": "Center City West", "lat": 39.9536, "lng": -75.1743, "population": 22940, "early_death": 1.0, "homicide": 0.0, "overdose": 0.0, "shooting": 0.04, "hospital": 1.26, "foster": 0.0, "schools": 4, "early_death_raw": 23, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 1, "hospital_raw": 29, "foster_raw": 0, "cli": 7.7}, {"year": 2017, "zip": "19104", "name": "University City", "lat": 39.9587, "lng": -75.2015, "population": 55205, "early_death": 2.1, "homicide": 0.0, "overdose": 0.25, "shooting": 0.4, "hospital": 1.99, "foster": 8.8, "schools": 8, "early_death_raw": 116, "homicide_raw": 0, "overdose_raw": 14, "shooting_raw": 22, "hospital_raw": 110, "foster_raw": 486, "cli": 28.9}, {"year": 2017, "zip": "19106", "name": "Old City", "lat": 39.947, "lng": -75.1445, "population": 12045, "early_death": 0.83, "homicide": 0.0, "overdose": 0.0, "shooting": 0.08, "hospital": 1.08, "foster": 1.16, "schools": 4, "early_death_raw": 10, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 1, "hospital_raw": 13, "foster_raw": 14, "cli": 8.1}, {"year": 2017, "zip": "19107", "name": "Chinatown", "lat": 39.9519, "lng": -75.1577, "population": 13832, "early_death": 1.74, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 3.33, "foster": 4.77, "schools": 1, "early_death_raw": 24, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 46, "foster_raw": 66, "cli": 21.2}, {"year": 2017, "zip": "19111", "name": "Fox Chase", "lat": 40.0654, "lng": -75.0774, "population": 70020, "early_death": 2.2, "homicide": 0.0, "overdose": 0.51, "shooting": 0.1, "hospital": 1.43, "foster": 2.86, "schools": 7, "early_death_raw": 154, "homicide_raw": 0, "overdose_raw": 36, "shooting_raw": 7, "hospital_raw": 100, "foster_raw": 200, "cli": 21.6}, {"year": 2017, "zip": "19114", "name": "Torresdale", "lat": 40.065, "lng": -75.025, "population": 31478, "early_death": 3.21, "homicide": 0.0, "overdose": 0.64, "shooting": 0.06, "hospital": 1.78, "foster": 2.41, "schools": 3, "early_death_raw": 101, "homicide_raw": 0, "overdose_raw": 20, "shooting_raw": 2, "hospital_raw": 56, "foster_raw": 76, "cli": 26.7}, {"year": 2017, "zip": "19115", "name": "Bustleton", "lat": 40.0896, "lng": -75.0446, "population": 33832, "early_death": 2.66, "homicide": 0.0, "overdose": 0.56, "shooting": 0.0, "hospital": 1.51, "foster": 1.09, "schools": 3, "early_death_raw": 90, "homicide_raw": 0, "overdose_raw": 19, "shooting_raw": 0, "hospital_raw": 51, "foster_raw": 37, "cli": 21.2}, {"year": 2017, "zip": "19116", "name": "Somerton", "lat": 40.1156, "lng": -75.0156, "population": 34194, "early_death": 2.25, "homicide": 0.0, "overdose": 0.53, "shooting": 0.0, "hospital": 1.2, "foster": 1.52, "schools": 5, "early_death_raw": 77, "homicide_raw": 0, "overdose_raw": 18, "shooting_raw": 0, "hospital_raw": 41, "foster_raw": 52, "cli": 18.9}, {"year": 2017, "zip": "19118", "name": "Chestnut Hill", "lat": 40.0724, "lng": -75.2089, "population": 10800, "early_death": 1.39, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 1.3, "foster": 0.0, "schools": 1, "early_death_raw": 15, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 14, "foster_raw": 0, "cli": 8.7}, {"year": 2017, "zip": "19119", "name": "Mt Airy", "lat": 40.0553, "lng": -75.1893, "population": 29163, "early_death": 2.33, "homicide": 0.0, "overdose": 0.0, "shooting": 0.34, "hospital": 1.92, "foster": 4.22, "schools": 5, "early_death_raw": 68, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 10, "hospital_raw": 56, "foster_raw": 123, "cli": 21.4}, {"year": 2017, "zip": "19120", "name": "Olney", "lat": 40.034, "lng": -75.119, "population": 72376, "early_death": 2.4, "homicide": 0.19, "overdose": 0.35, "shooting": 0.93, "hospital": 1.82, "foster": 8.4, "schools": 12, "early_death_raw": 174, "homicide_raw": 14, "overdose_raw": 25, "shooting_raw": 67, "hospital_raw": 132, "foster_raw": 608, "cli": 35.3}, {"year": 2017, "zip": "19121", "name": "North Central", "lat": 39.9812, "lng": -75.1722, "population": 31546, "early_death": 4.6, "homicide": 0.44, "overdose": 0.73, "shooting": 1.81, "hospital": 2.88, "foster": 19.88, "schools": 11, "early_death_raw": 145, "homicide_raw": 14, "overdose_raw": 23, "shooting_raw": 57, "hospital_raw": 91, "foster_raw": 627, "cli": 70.3}, {"year": 2017, "zip": "19122", "name": "Norris Square", "lat": 39.9812, "lng": -75.1422, "population": 22690, "early_death": 2.07, "homicide": 0.0, "overdose": 0.0, "shooting": 0.44, "hospital": 2.64, "foster": 7.89, "schools": 9, "early_death_raw": 47, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 10, "hospital_raw": 60, "foster_raw": 179, "cli": 27.5}, {"year": 2017, "zip": "19123", "name": "Northern Liberties", "lat": 39.9643, "lng": -75.1492, "population": 15167, "early_death": 3.03, "homicide": 0.0, "overdose": 0.0, "shooting": 0.66, "hospital": 2.84, "foster": 8.18, "schools": 7, "early_death_raw": 46, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 10, "hospital_raw": 43, "foster_raw": 124, "cli": 33.7}, {"year": 2017, "zip": "19124", "name": "Frankford", "lat": 40.0234, "lng": -75.0934, "population": 68905, "early_death": 3.92, "homicide": 0.28, "overdose": 1.04, "shooting": 0.75, "hospital": 1.96, "foster": 13.06, "schools": 13, "early_death_raw": 270, "homicide_raw": 19, "overdose_raw": 72, "shooting_raw": 52, "hospital_raw": 135, "foster_raw": 900, "cli": 51.6}, {"year": 2017, "zip": "19125", "name": "Fishtown", "lat": 39.9753, "lng": -75.1282, "population": 24149, "early_death": 3.81, "homicide": 0.0, "overdose": 1.16, "shooting": 0.08, "hospital": 2.57, "foster": 5.8, "schools": 8, "early_death_raw": 92, "homicide_raw": 0, "overdose_raw": 28, "shooting_raw": 2, "hospital_raw": 62, "foster_raw": 140, "cli": 40.8}, {"year": 2017, "zip": "19126", "name": "Oak Lane", "lat": 40.0553, "lng": -75.1383, "population": 15982, "early_death": 4.19, "homicide": 0.0, "overdose": 0.0, "shooting": 0.19, "hospital": 2.32, "foster": 9.51, "schools": 2, "early_death_raw": 67, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 3, "hospital_raw": 37, "foster_raw": 152, "cli": 32.5}, {"year": 2017, "zip": "19127", "name": "Manayunk", "lat": 40.0274, "lng": -75.2249, "population": 6038, "early_death": 0.0, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 0.0, "foster": 0.0, "schools": 1, "early_death_raw": 0, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 0, "foster_raw": 0, "cli": 0.0}, {"year": 2017, "zip": "19128", "name": "Roxborough", "lat": 40.0514, "lng": -75.2279, "population": 37550, "early_death": 1.92, "homicide": 0.0, "overdose": 0.37, "shooting": 0.0, "hospital": 1.57, "foster": 2.37, "schools": 6, "early_death_raw": 72, "homicide_raw": 0, "overdose_raw": 14, "shooting_raw": 0, "hospital_raw": 59, "foster_raw": 89, "cli": 18.0}, {"year": 2017, "zip": "19129", "name": "East Falls", "lat": 40.0144, "lng": -75.1893, "population": 11058, "early_death": 3.07, "homicide": 0.0, "overdose": 0.0, "shooting": 0.09, "hospital": 3.44, "foster": 5.06, "schools": 4, "early_death_raw": 34, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 1, "hospital_raw": 38, "foster_raw": 56, "cli": 27.1}, {"year": 2017, "zip": "19130", "name": "Fairmount", "lat": 39.9682, "lng": -75.1762, "population": 26100, "early_death": 1.57, "homicide": 0.0, "overdose": 0.0, "shooting": 0.23, "hospital": 1.61, "foster": 3.37, "schools": 7, "early_death_raw": 41, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 6, "hospital_raw": 42, "foster_raw": 88, "cli": 15.9}, {"year": 2017, "zip": "19131", "name": "Overbrook", "lat": 39.9902, "lng": -75.2249, "population": 44915, "early_death": 3.3, "homicide": 0.0, "overdose": 0.31, "shooting": 0.65, "hospital": 2.4, "foster": 8.28, "schools": 11, "early_death_raw": 148, "homicide_raw": 0, "overdose_raw": 14, "shooting_raw": 29, "hospital_raw": 108, "foster_raw": 372, "cli": 36.8}, {"year": 2017, "zip": "19132", "name": "Strawberry Mansion", "lat": 40.0014, "lng": -75.1722, "population": 33368, "early_death": 6.14, "homicide": 0.54, "overdose": 0.81, "shooting": 2.46, "hospital": 4.62, "foster": 20.05, "schools": 7, "early_death_raw": 205, "homicide_raw": 18, "overdose_raw": 27, "shooting_raw": 82, "hospital_raw": 154, "foster_raw": 669, "cli": 88.4}, {"year": 2017, "zip": "19133", "name": "Hunting Park", "lat": 39.9972, "lng": -75.1342, "population": 27397, "early_death": 4.89, "homicide": 0.4, "overdose": 1.42, "shooting": 2.56, "hospital": 2.41, "foster": 14.86, "schools": 9, "early_death_raw": 134, "homicide_raw": 11, "overdose_raw": 39, "shooting_raw": 70, "hospital_raw": 66, "foster_raw": 407, "cli": 80.1}, {"year": 2017, "zip": "19134", "name": "Kensington", "lat": 39.9953, "lng": -75.1052, "population": 62861, "early_death": 4.93, "homicide": 0.41, "overdose": 1.72, "shooting": 1.53, "hospital": 2.72, "foster": 12.82, "schools": 11, "early_death_raw": 310, "homicide_raw": 26, "overdose_raw": 108, "shooting_raw": 96, "hospital_raw": 171, "foster_raw": 806, "cli": 72.6}, {"year": 2017, "zip": "19135", "name": "Holmesburg", "lat": 40.0254, "lng": -75.0484, "population": 33602, "early_death": 3.6, "homicide": 0.0, "overdose": 0.95, "shooting": 0.36, "hospital": 1.61, "foster": 9.79, "schools": 3, "early_death_raw": 121, "homicide_raw": 0, "overdose_raw": 32, "shooting_raw": 12, "hospital_raw": 54, "foster_raw": 329, "cli": 41.3}, {"year": 2017, "zip": "19136", "name": "Pennypack", "lat": 40.0494, "lng": -75.0234, "population": 32912, "early_death": 3.8, "homicide": 0.0, "overdose": 1.06, "shooting": 0.18, "hospital": 2.07, "foster": 7.69, "schools": 5, "early_death_raw": 125, "homicide_raw": 0, "overdose_raw": 35, "shooting_raw": 6, "hospital_raw": 68, "foster_raw": 253, "cli": 40.9}, {"year": 2017, "zip": "19137", "name": "Bridesburg", "lat": 39.9993, "lng": -75.0724, "population": 7937, "early_death": 6.05, "homicide": 0.0, "overdose": 1.39, "shooting": 0.25, "hospital": 1.51, "foster": 6.93, "schools": 4, "early_death_raw": 48, "homicide_raw": 0, "overdose_raw": 11, "shooting_raw": 2, "hospital_raw": 12, "foster_raw": 55, "cli": 50.1}, {"year": 2017, "zip": "19138", "name": "West Oak Lane", "lat": 40.0554, "lng": -75.1593, "population": 34614, "early_death": 3.21, "homicide": 0.35, "overdose": 0.0, "shooting": 0.66, "hospital": 1.73, "foster": 10.78, "schools": 6, "early_death_raw": 111, "homicide_raw": 12, "overdose_raw": 0, "shooting_raw": 23, "hospital_raw": 60, "foster_raw": 373, "cli": 33.3}, {"year": 2017, "zip": "19139", "name": "West Philadelphia", "lat": 39.9612, "lng": -75.2289, "population": 44675, "early_death": 3.42, "homicide": 0.31, "overdose": 0.65, "shooting": 1.23, "hospital": 2.78, "foster": 12.27, "schools": 13, "early_death_raw": 153, "homicide_raw": 14, "overdose_raw": 29, "shooting_raw": 55, "hospital_raw": 124, "foster_raw": 548, "cli": 52.0}, {"year": 2017, "zip": "19140", "name": "North Philadelphia", "lat": 40.0124, "lng": -75.1452, "population": 49300, "early_death": 5.19, "homicide": 0.47, "overdose": 0.79, "shooting": 1.68, "hospital": 3.96, "foster": 17.95, "schools": 17, "early_death_raw": 256, "homicide_raw": 23, "overdose_raw": 39, "shooting_raw": 83, "hospital_raw": 195, "foster_raw": 885, "cli": 73.3}, {"year": 2017, "zip": "19141", "name": "Logan", "lat": 40.0374, "lng": -75.1452, "population": 33791, "early_death": 3.61, "homicide": 0.0, "overdose": 0.38, "shooting": 1.07, "hospital": 1.86, "foster": 11.45, "schools": 12, "early_death_raw": 122, "homicide_raw": 0, "overdose_raw": 13, "shooting_raw": 36, "hospital_raw": 63, "foster_raw": 387, "cli": 44.1}, {"year": 2017, "zip": "19142", "name": "Southwest", "lat": 39.9232, "lng": -75.2319, "population": 28238, "early_death": 4.11, "homicide": 0.39, "overdose": 0.46, "shooting": 1.06, "hospital": 2.44, "foster": 12.61, "schools": 8, "early_death_raw": 116, "homicide_raw": 11, "overdose_raw": 13, "shooting_raw": 30, "hospital_raw": 69, "foster_raw": 356, "cli": 49.6}, {"year": 2017, "zip": "19143", "name": "Southwest Philly", "lat": 39.9422, "lng": -75.2269, "population": 65812, "early_death": 3.57, "homicide": 0.36, "overdose": 0.4, "shooting": 0.94, "hospital": 2.67, "foster": 10.51, "schools": 12, "early_death_raw": 235, "homicide_raw": 24, "overdose_raw": 26, "shooting_raw": 62, "hospital_raw": 176, "foster_raw": 692, "cli": 44.6}, {"year": 2017, "zip": "19144", "name": "Germantown", "lat": 40.0344, "lng": -75.1753, "population": 41209, "early_death": 4.15, "homicide": 0.29, "overdose": 0.56, "shooting": 0.85, "hospital": 2.72, "foster": 13.78, "schools": 7, "early_death_raw": 171, "homicide_raw": 12, "overdose_raw": 23, "shooting_raw": 35, "hospital_raw": 112, "foster_raw": 568, "cli": 50.9}, {"year": 2017, "zip": "19145", "name": "South Philly West", "lat": 39.9182, "lng": -75.1862, "population": 46311, "early_death": 3.43, "homicide": 0.0, "overdose": 0.8, "shooting": 0.69, "hospital": 2.12, "foster": 5.72, "schools": 8, "early_death_raw": 159, "homicide_raw": 0, "overdose_raw": 37, "shooting_raw": 32, "hospital_raw": 98, "foster_raw": 265, "cli": 39.8}, {"year": 2017, "zip": "19146", "name": "South Philadelphia", "lat": 39.9372, "lng": -75.1772, "population": 38486, "early_death": 2.62, "homicide": 0.0, "overdose": 0.55, "shooting": 0.55, "hospital": 2.08, "foster": 5.9, "schools": 7, "early_death_raw": 101, "homicide_raw": 0, "overdose_raw": 21, "shooting_raw": 21, "hospital_raw": 80, "foster_raw": 227, "cli": 32.9}, {"year": 2017, "zip": "19147", "name": "Queen Village", "lat": 39.9372, "lng": -75.1542, "population": 39114, "early_death": 1.79, "homicide": 0.0, "overdose": 0.51, "shooting": 0.08, "hospital": 1.12, "foster": 1.79, "schools": 8, "early_death_raw": 70, "homicide_raw": 0, "overdose_raw": 20, "shooting_raw": 3, "hospital_raw": 44, "foster_raw": 70, "cli": 18.0}, {"year": 2017, "zip": "19148", "name": "South Philly East", "lat": 39.9142, "lng": -75.1522, "population": 53440, "early_death": 3.37, "homicide": 0.0, "overdose": 1.01, "shooting": 0.17, "hospital": 1.91, "foster": 2.43, "schools": 9, "early_death_raw": 180, "homicide_raw": 0, "overdose_raw": 54, "shooting_raw": 9, "hospital_raw": 102, "foster_raw": 130, "cli": 33.0}, {"year": 2017, "zip": "19149", "name": "Mayfair", "lat": 40.0394, "lng": -75.0664, "population": 59853, "early_death": 2.81, "homicide": 0.0, "overdose": 0.72, "shooting": 0.27, "hospital": 1.47, "foster": 5.16, "schools": 5, "early_death_raw": 168, "homicide_raw": 0, "overdose_raw": 43, "shooting_raw": 16, "hospital_raw": 88, "foster_raw": 309, "cli": 30.1}, {"year": 2017, "zip": "19150", "name": "Cedarbrook", "lat": 40.0724, "lng": -75.1593, "population": 24048, "early_death": 2.62, "homicide": 0.0, "overdose": 0.0, "shooting": 0.37, "hospital": 1.66, "foster": 4.32, "schools": 4, "early_death_raw": 63, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 9, "hospital_raw": 40, "foster_raw": 104, "cli": 21.8}, {"year": 2017, "zip": "19151", "name": "Overbrook Park", "lat": 39.9782, "lng": -75.2569, "population": 35102, "early_death": 2.59, "homicide": 0.0, "overdose": 0.4, "shooting": 0.46, "hospital": 1.6, "foster": 5.95, "schools": 7, "early_death_raw": 91, "homicide_raw": 0, "overdose_raw": 14, "shooting_raw": 16, "hospital_raw": 56, "foster_raw": 209, "cli": 28.7}, {"year": 2017, "zip": "19152", "name": "Northeast", "lat": 40.0624, "lng": -75.0464, "population": 35626, "early_death": 2.55, "homicide": 0.0, "overdose": 0.59, "shooting": 0.06, "hospital": 1.54, "foster": 2.58, "schools": 4, "early_death_raw": 91, "homicide_raw": 0, "overdose_raw": 21, "shooting_raw": 2, "hospital_raw": 55, "foster_raw": 92, "cli": 23.3}, {"year": 2017, "zip": "19153", "name": "Eastwick", "lat": 39.8952, "lng": -75.2389, "population": 13613, "early_death": 3.31, "homicide": 0.0, "overdose": 0.0, "shooting": 0.59, "hospital": 1.76, "foster": 5.29, "schools": 2, "early_death_raw": 45, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 8, "hospital_raw": 24, "foster_raw": 72, "cli": 27.5}, {"year": 2017, "zip": "19154", "name": "Far Northeast", "lat": 40.0924, "lng": -74.9864, "population": 33512, "early_death": 2.6, "homicide": 0.0, "overdose": 1.04, "shooting": 0.03, "hospital": 1.46, "foster": 2.57, "schools": 4, "early_death_raw": 87, "homicide_raw": 0, "overdose_raw": 35, "shooting_raw": 1, "hospital_raw": 49, "foster_raw": 86, "cli": 28.2}, {"year": 2018, "zip": "19102", "name": "Center City East", "lat": 39.9526, "lng": -75.1652, "population": 4937, "early_death": 0.0, "homicide": 0.0, "overdose": 0.0, "shooting": 0.2, "hospital": 2.84, "foster": 4.25, "schools": 1, "early_death_raw": 0, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 1, "hospital_raw": 14, "foster_raw": 21, "cli": 15.3}, {"year": 2018, "zip": "19103", "name": "Center City West", "lat": 39.9536, "lng": -75.1743, "population": 24219, "early_death": 1.03, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 1.24, "foster": 0.0, "schools": 4, "early_death_raw": 25, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 30, "foster_raw": 0, "cli": 7.4}, {"year": 2018, "zip": "19104", "name": "University City", "lat": 39.9587, "lng": -75.2015, "population": 54311, "early_death": 2.06, "homicide": 0.0, "overdose": 0.46, "shooting": 0.41, "hospital": 1.71, "foster": 7.55, "schools": 9, "early_death_raw": 112, "homicide_raw": 0, "overdose_raw": 25, "shooting_raw": 22, "hospital_raw": 93, "foster_raw": 410, "cli": 30.5}, {"year": 2018, "zip": "19106", "name": "Old City", "lat": 39.947, "lng": -75.1445, "population": 12375, "early_death": 1.05, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 1.37, "foster": 0.0, "schools": 4, "early_death_raw": 13, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 17, "foster_raw": 0, "cli": 7.8}, {"year": 2018, "zip": "19107", "name": "Chinatown", "lat": 39.9519, "lng": -75.1577, "population": 13696, "early_death": 1.46, "homicide": 0.0, "overdose": 0.0, "shooting": 0.07, "hospital": 2.41, "foster": 3.8, "schools": 1, "early_death_raw": 20, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 1, "hospital_raw": 33, "foster_raw": 52, "cli": 17.3}, {"year": 2018, "zip": "19111", "name": "Fox Chase", "lat": 40.0654, "lng": -75.0774, "population": 68263, "early_death": 2.33, "homicide": 0.15, "overdose": 0.4, "shooting": 0.09, "hospital": 1.76, "foster": 2.33, "schools": 7, "early_death_raw": 159, "homicide_raw": 10, "overdose_raw": 27, "shooting_raw": 6, "hospital_raw": 120, "foster_raw": 159, "cli": 22.1}, {"year": 2018, "zip": "19114", "name": "Torresdale", "lat": 40.065, "lng": -75.025, "population": 31736, "early_death": 3.31, "homicide": 0.0, "overdose": 0.66, "shooting": 0.09, "hospital": 1.39, "foster": 1.67, "schools": 3, "early_death_raw": 105, "homicide_raw": 0, "overdose_raw": 21, "shooting_raw": 3, "hospital_raw": 44, "foster_raw": 53, "cli": 27.0}, {"year": 2018, "zip": "19115", "name": "Bustleton", "lat": 40.0896, "lng": -75.0446, "population": 34479, "early_death": 1.97, "homicide": 0.0, "overdose": 0.29, "shooting": 0.03, "hospital": 1.51, "foster": 1.02, "schools": 3, "early_death_raw": 68, "homicide_raw": 0, "overdose_raw": 10, "shooting_raw": 1, "hospital_raw": 52, "foster_raw": 35, "cli": 16.6}, {"year": 2018, "zip": "19116", "name": "Somerton", "lat": 40.1156, "lng": -75.0156, "population": 34912, "early_death": 2.78, "homicide": 0.0, "overdose": 0.57, "shooting": 0.03, "hospital": 1.55, "foster": 1.0, "schools": 5, "early_death_raw": 97, "homicide_raw": 0, "overdose_raw": 20, "shooting_raw": 1, "hospital_raw": 54, "foster_raw": 35, "cli": 23.2}, {"year": 2018, "zip": "19118", "name": "Chestnut Hill", "lat": 40.0724, "lng": -75.2089, "population": 10919, "early_death": 1.37, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 1.92, "foster": 1.1, "schools": 1, "early_death_raw": 15, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 21, "foster_raw": 12, "cli": 11.8}, {"year": 2018, "zip": "19119", "name": "Mt Airy", "lat": 40.0553, "lng": -75.1893, "population": 29391, "early_death": 2.79, "homicide": 0.0, "overdose": 0.0, "shooting": 0.34, "hospital": 2.18, "foster": 4.05, "schools": 5, "early_death_raw": 82, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 10, "hospital_raw": 64, "foster_raw": 119, "cli": 23.9}, {"year": 2018, "zip": "19120", "name": "Olney", "lat": 40.034, "lng": -75.119, "population": 74971, "early_death": 2.81, "homicide": 0.24, "overdose": 0.27, "shooting": 0.71, "hospital": 1.65, "foster": 6.84, "schools": 12, "early_death_raw": 211, "homicide_raw": 18, "overdose_raw": 20, "shooting_raw": 53, "hospital_raw": 124, "foster_raw": 513, "cli": 32.4}, {"year": 2018, "zip": "19121", "name": "North Central", "lat": 39.9812, "lng": -75.1722, "population": 30733, "early_death": 5.34, "homicide": 0.36, "overdose": 0.65, "shooting": 1.76, "hospital": 3.87, "foster": 18.09, "schools": 11, "early_death_raw": 164, "homicide_raw": 11, "overdose_raw": 20, "shooting_raw": 54, "hospital_raw": 119, "foster_raw": 556, "cli": 75.1}, {"year": 2018, "zip": "19122", "name": "Norris Square", "lat": 39.9812, "lng": -75.1422, "population": 22187, "early_death": 3.02, "homicide": 0.0, "overdose": 0.45, "shooting": 0.77, "hospital": 3.43, "foster": 7.17, "schools": 9, "early_death_raw": 67, "homicide_raw": 0, "overdose_raw": 10, "shooting_raw": 17, "hospital_raw": 76, "foster_raw": 159, "cli": 41.9}, {"year": 2018, "zip": "19123", "name": "Northern Liberties", "lat": 39.9643, "lng": -75.1492, "population": 15681, "early_death": 2.61, "homicide": 0.0, "overdose": 0.0, "shooting": 0.45, "hospital": 3.06, "foster": 6.12, "schools": 7, "early_death_raw": 41, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 7, "hospital_raw": 48, "foster_raw": 96, "cli": 29.3}, {"year": 2018, "zip": "19124", "name": "Frankford", "lat": 40.0234, "lng": -75.0934, "population": 68965, "early_death": 3.58, "homicide": 0.36, "overdose": 0.99, "shooting": 1.04, "hospital": 2.41, "foster": 10.54, "schools": 14, "early_death_raw": 247, "homicide_raw": 25, "overdose_raw": 68, "shooting_raw": 72, "hospital_raw": 166, "foster_raw": 727, "cli": 54.0}, {"year": 2018, "zip": "19125", "name": "Fishtown", "lat": 39.9753, "lng": -75.1282, "population": 24674, "early_death": 2.92, "homicide": 0.0, "overdose": 0.93, "shooting": 0.12, "hospital": 2.92, "foster": 4.01, "schools": 8, "early_death_raw": 72, "homicide_raw": 0, "overdose_raw": 23, "shooting_raw": 3, "hospital_raw": 72, "foster_raw": 99, "cli": 36.7}, {"year": 2018, "zip": "19126", "name": "Oak Lane", "lat": 40.0553, "lng": -75.1383, "population": 15863, "early_death": 2.84, "homicide": 0.0, "overdose": 0.0, "shooting": 0.38, "hospital": 3.59, "foster": 8.83, "schools": 2, "early_death_raw": 45, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 6, "hospital_raw": 57, "foster_raw": 140, "cli": 34.1}, {"year": 2018, "zip": "19127", "name": "Manayunk", "lat": 40.0274, "lng": -75.2249, "population": 6082, "early_death": 0.0, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 0.0, "foster": 0.0, "schools": 1, "early_death_raw": 0, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 0, "foster_raw": 0, "cli": 0.0}, {"year": 2018, "zip": "19128", "name": "Roxborough", "lat": 40.0514, "lng": -75.2279, "population": 38309, "early_death": 2.11, "homicide": 0.0, "overdose": 0.39, "shooting": 0.08, "hospital": 1.78, "foster": 2.19, "schools": 6, "early_death_raw": 81, "homicide_raw": 0, "overdose_raw": 15, "shooting_raw": 3, "hospital_raw": 68, "foster_raw": 84, "cli": 21.0}, {"year": 2018, "zip": "19129", "name": "East Falls", "lat": 40.0144, "lng": -75.1893, "population": 10640, "early_death": 2.44, "homicide": 0.0, "overdose": 0.0, "shooting": 0.56, "hospital": 1.6, "foster": 5.64, "schools": 4, "early_death_raw": 26, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 6, "hospital_raw": 17, "foster_raw": 60, "cli": 24.8}, {"year": 2018, "zip": "19130", "name": "Fairmount", "lat": 39.9682, "lng": -75.1762, "population": 27410, "early_death": 2.08, "homicide": 0.0, "overdose": 0.0, "shooting": 0.18, "hospital": 1.02, "foster": 2.7, "schools": 7, "early_death_raw": 57, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 5, "hospital_raw": 28, "foster_raw": 74, "cli": 14.9}, {"year": 2018, "zip": "19131", "name": "Overbrook", "lat": 39.9902, "lng": -75.2249, "population": 44972, "early_death": 3.14, "homicide": 0.29, "overdose": 0.44, "shooting": 0.64, "hospital": 2.29, "foster": 7.76, "schools": 12, "early_death_raw": 141, "homicide_raw": 13, "overdose_raw": 20, "shooting_raw": 29, "hospital_raw": 103, "foster_raw": 349, "cli": 38.1}, {"year": 2018, "zip": "19132", "name": "Strawberry Mansion", "lat": 40.0014, "lng": -75.1722, "population": 32196, "early_death": 5.81, "homicide": 0.62, "overdose": 0.78, "shooting": 2.67, "hospital": 4.88, "foster": 18.2, "schools": 7, "early_death_raw": 187, "homicide_raw": 20, "overdose_raw": 25, "shooting_raw": 86, "hospital_raw": 157, "foster_raw": 586, "cli": 90.2}, {"year": 2018, "zip": "19133", "name": "Hunting Park", "lat": 39.9972, "lng": -75.1342, "population": 27419, "early_death": 5.29, "homicide": 0.47, "overdose": 1.09, "shooting": 2.55, "hospital": 3.06, "foster": 12.33, "schools": 9, "early_death_raw": 145, "homicide_raw": 13, "overdose_raw": 30, "shooting_raw": 70, "hospital_raw": 84, "foster_raw": 338, "cli": 79.3}, {"year": 2018, "zip": "19134", "name": "Kensington", "lat": 39.9953, "lng": -75.1052, "population": 61509, "early_death": 4.71, "homicide": 0.21, "overdose": 1.53, "shooting": 1.82, "hospital": 2.55, "foster": 10.68, "schools": 11, "early_death_raw": 290, "homicide_raw": 13, "overdose_raw": 94, "shooting_raw": 112, "hospital_raw": 157, "foster_raw": 657, "cli": 72.8}, {"year": 2018, "zip": "19135", "name": "Holmesburg", "lat": 40.0254, "lng": -75.0484, "population": 35302, "early_death": 3.54, "homicide": 0.0, "overdose": 1.05, "shooting": 0.31, "hospital": 2.35, "foster": 6.74, "schools": 3, "early_death_raw": 125, "homicide_raw": 0, "overdose_raw": 37, "shooting_raw": 11, "hospital_raw": 83, "foster_raw": 238, "cli": 43.4}, {"year": 2018, "zip": "19136", "name": "Pennypack", "lat": 40.0494, "lng": -75.0234, "population": 34470, "early_death": 3.95, "homicide": 0.29, "overdose": 0.96, "shooting": 0.12, "hospital": 1.89, "foster": 5.11, "schools": 5, "early_death_raw": 136, "homicide_raw": 10, "overdose_raw": 33, "shooting_raw": 4, "hospital_raw": 65, "foster_raw": 176, "cli": 38.7}, {"year": 2018, "zip": "19137", "name": "Bridesburg", "lat": 39.9993, "lng": -75.0724, "population": 8482, "early_death": 4.01, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 2.36, "foster": 6.48, "schools": 4, "early_death_raw": 34, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 20, "foster_raw": 55, "cli": 28.2}, {"year": 2018, "zip": "19138", "name": "West Oak Lane", "lat": 40.0554, "lng": -75.1593, "population": 32399, "early_death": 3.43, "homicide": 0.68, "overdose": 0.46, "shooting": 0.8, "hospital": 2.56, "foster": 12.04, "schools": 7, "early_death_raw": 111, "homicide_raw": 22, "overdose_raw": 15, "shooting_raw": 26, "hospital_raw": 83, "foster_raw": 390, "cli": 46.4}, {"year": 2018, "zip": "19139", "name": "West Philadelphia", "lat": 39.9612, "lng": -75.2289, "population": 44870, "early_death": 4.19, "homicide": 0.4, "overdose": 0.69, "shooting": 1.85, "hospital": 3.41, "foster": 11.21, "schools": 13, "early_death_raw": 188, "homicide_raw": 18, "overdose_raw": 31, "shooting_raw": 83, "hospital_raw": 153, "foster_raw": 503, "cli": 63.6}, {"year": 2018, "zip": "19140", "name": "North Philadelphia", "lat": 40.0124, "lng": -75.1452, "population": 51667, "early_death": 4.72, "homicide": 0.7, "overdose": 0.85, "shooting": 2.01, "hospital": 3.52, "foster": 14.63, "schools": 18, "early_death_raw": 244, "homicide_raw": 36, "overdose_raw": 44, "shooting_raw": 104, "hospital_raw": 182, "foster_raw": 756, "cli": 73.1}, {"year": 2018, "zip": "19141", "name": "Logan", "lat": 40.0374, "lng": -75.1452, "population": 34784, "early_death": 3.16, "homicide": 0.34, "overdose": 0.0, "shooting": 1.61, "hospital": 2.41, "foster": 8.39, "schools": 13, "early_death_raw": 110, "homicide_raw": 12, "overdose_raw": 0, "shooting_raw": 56, "hospital_raw": 84, "foster_raw": 292, "cli": 42.6}, {"year": 2018, "zip": "19142", "name": "Southwest", "lat": 39.9232, "lng": -75.2319, "population": 28144, "early_death": 4.12, "homicide": 0.43, "overdose": 0.5, "shooting": 1.31, "hospital": 2.2, "foster": 10.02, "schools": 8, "early_death_raw": 116, "homicide_raw": 12, "overdose_raw": 14, "shooting_raw": 37, "hospital_raw": 62, "foster_raw": 282, "cli": 50.8}, {"year": 2018, "zip": "19143", "name": "Southwest Philly", "lat": 39.9422, "lng": -75.2269, "population": 65247, "early_death": 3.85, "homicide": 0.44, "overdose": 0.44, "shooting": 1.01, "hospital": 2.79, "foster": 8.09, "schools": 14, "early_death_raw": 251, "homicide_raw": 29, "overdose_raw": 29, "shooting_raw": 66, "hospital_raw": 182, "foster_raw": 528, "cli": 45.9}, {"year": 2018, "zip": "19144", "name": "Germantown", "lat": 40.0344, "lng": -75.1753, "population": 42556, "early_death": 3.64, "homicide": 0.42, "overdose": 0.54, "shooting": 1.25, "hospital": 2.94, "foster": 10.64, "schools": 7, "early_death_raw": 155, "homicide_raw": 18, "overdose_raw": 23, "shooting_raw": 53, "hospital_raw": 125, "foster_raw": 453, "cli": 52.0}, {"year": 2018, "zip": "19145", "name": "South Philly West", "lat": 39.9182, "lng": -75.1862, "population": 46623, "early_death": 3.13, "homicide": 0.0, "overdose": 0.51, "shooting": 0.84, "hospital": 2.27, "foster": 4.87, "schools": 8, "early_death_raw": 146, "homicide_raw": 0, "overdose_raw": 24, "shooting_raw": 39, "hospital_raw": 106, "foster_raw": 227, "cli": 37.6}, {"year": 2018, "zip": "19146", "name": "South Philadelphia", "lat": 39.9372, "lng": -75.1772, "population": 38873, "early_death": 2.62, "homicide": 0.26, "overdose": 0.44, "shooting": 0.72, "hospital": 2.37, "foster": 4.84, "schools": 7, "early_death_raw": 102, "homicide_raw": 10, "overdose_raw": 17, "shooting_raw": 28, "hospital_raw": 92, "foster_raw": 188, "cli": 34.1}, {"year": 2018, "zip": "19147", "name": "Queen Village", "lat": 39.9372, "lng": -75.1542, "population": 39060, "early_death": 1.56, "homicide": 0.0, "overdose": 0.28, "shooting": 0.26, "hospital": 1.33, "foster": 1.66, "schools": 8, "early_death_raw": 61, "homicide_raw": 0, "overdose_raw": 11, "shooting_raw": 10, "hospital_raw": 52, "foster_raw": 65, "cli": 17.4}, {"year": 2018, "zip": "19148", "name": "South Philly East", "lat": 39.9142, "lng": -75.1522, "population": 52594, "early_death": 3.06, "homicide": 0.0, "overdose": 1.14, "shooting": 0.11, "hospital": 2.17, "foster": 1.79, "schools": 10, "early_death_raw": 161, "homicide_raw": 0, "overdose_raw": 60, "shooting_raw": 6, "hospital_raw": 114, "foster_raw": 94, "cli": 35.1}, {"year": 2018, "zip": "19149", "name": "Mayfair", "lat": 40.0394, "lng": -75.0664, "population": 59633, "early_death": 2.57, "homicide": 0.0, "overdose": 0.49, "shooting": 0.23, "hospital": 1.73, "foster": 3.86, "schools": 5, "early_death_raw": 153, "homicide_raw": 0, "overdose_raw": 29, "shooting_raw": 14, "hospital_raw": 103, "foster_raw": 230, "cli": 27.0}, {"year": 2018, "zip": "19150", "name": "Cedarbrook", "lat": 40.0724, "lng": -75.1593, "population": 22492, "early_death": 3.07, "homicide": 0.0, "overdose": 0.0, "shooting": 0.18, "hospital": 2.71, "foster": 4.49, "schools": 4, "early_death_raw": 69, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 4, "hospital_raw": 61, "foster_raw": 101, "cli": 25.5}, {"year": 2018, "zip": "19151", "name": "Overbrook Park", "lat": 39.9782, "lng": -75.2569, "population": 33174, "early_death": 2.83, "homicide": 0.0, "overdose": 0.33, "shooting": 0.54, "hospital": 1.45, "foster": 5.61, "schools": 7, "early_death_raw": 94, "homicide_raw": 0, "overdose_raw": 11, "shooting_raw": 18, "hospital_raw": 48, "foster_raw": 186, "cli": 29.7}, {"year": 2018, "zip": "19152", "name": "Northeast", "lat": 40.0624, "lng": -75.0464, "population": 37067, "early_death": 2.59, "homicide": 0.0, "overdose": 0.65, "shooting": 0.03, "hospital": 1.65, "foster": 1.62, "schools": 4, "early_death_raw": 96, "homicide_raw": 0, "overdose_raw": 24, "shooting_raw": 1, "hospital_raw": 61, "foster_raw": 60, "cli": 24.5}, {"year": 2018, "zip": "19153", "name": "Eastwick", "lat": 39.8952, "lng": -75.2389, "population": 13190, "early_death": 2.65, "homicide": 0.0, "overdose": 0.0, "shooting": 0.53, "hospital": 2.12, "foster": 4.62, "schools": 2, "early_death_raw": 35, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 7, "hospital_raw": 28, "foster_raw": 61, "cli": 25.7}, {"year": 2018, "zip": "19154", "name": "Far Northeast", "lat": 40.0924, "lng": -74.9864, "population": 34253, "early_death": 3.12, "homicide": 0.0, "overdose": 0.73, "shooting": 0.0, "hospital": 1.34, "foster": 1.52, "schools": 4, "early_death_raw": 107, "homicide_raw": 0, "overdose_raw": 25, "shooting_raw": 0, "hospital_raw": 46, "foster_raw": 52, "cli": 26.1}, {"year": 2019, "zip": "19102", "name": "Center City East", "lat": 39.9526, "lng": -75.1652, "population": 5147, "early_death": 2.91, "homicide": 0.0, "overdose": 0.0, "shooting": 0.78, "hospital": 3.69, "foster": 5.25, "schools": 1, "early_death_raw": 15, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 4, "hospital_raw": 19, "foster_raw": 27, "cli": 35.5}, {"year": 2019, "zip": "19103", "name": "Center City West", "lat": 39.9536, "lng": -75.1743, "population": 24214, "early_death": 0.95, "homicide": 0.0, "overdose": 0.0, "shooting": 0.04, "hospital": 1.36, "foster": 0.0, "schools": 4, "early_death_raw": 23, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 1, "hospital_raw": 33, "foster_raw": 0, "cli": 7.9}, {"year": 2019, "zip": "19104", "name": "University City", "lat": 39.9587, "lng": -75.2015, "population": 53560, "early_death": 2.48, "homicide": 0.24, "overdose": 0.43, "shooting": 0.67, "hospital": 1.81, "foster": 6.44, "schools": 10, "early_death_raw": 133, "homicide_raw": 13, "overdose_raw": 23, "shooting_raw": 36, "hospital_raw": 97, "foster_raw": 345, "cli": 33.3}, {"year": 2019, "zip": "19106", "name": "Old City", "lat": 39.947, "lng": -75.1445, "population": 12592, "early_death": 0.79, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 0.0, "foster": 0.0, "schools": 4, "early_death_raw": 10, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 0, "foster_raw": 0, "cli": 2.3}, {"year": 2019, "zip": "19107", "name": "Chinatown", "lat": 39.9519, "lng": -75.1577, "population": 14526, "early_death": 2.27, "homicide": 0.0, "overdose": 0.96, "shooting": 0.07, "hospital": 3.1, "foster": 2.89, "schools": 1, "early_death_raw": 33, "homicide_raw": 0, "overdose_raw": 14, "shooting_raw": 1, "hospital_raw": 45, "foster_raw": 42, "cli": 33.4}, {"year": 2019, "zip": "19111", "name": "Fox Chase", "lat": 40.0654, "lng": -75.0774, "population": 68113, "early_death": 2.45, "homicide": 0.0, "overdose": 0.4, "shooting": 0.03, "hospital": 1.56, "foster": 1.85, "schools": 7, "early_death_raw": 167, "homicide_raw": 0, "overdose_raw": 27, "shooting_raw": 2, "hospital_raw": 106, "foster_raw": 126, "cli": 20.0}, {"year": 2019, "zip": "19114", "name": "Torresdale", "lat": 40.065, "lng": -75.025, "population": 31668, "early_death": 2.75, "homicide": 0.0, "overdose": 0.54, "shooting": 0.03, "hospital": 1.86, "foster": 1.71, "schools": 3, "early_death_raw": 87, "homicide_raw": 0, "overdose_raw": 17, "shooting_raw": 1, "hospital_raw": 59, "foster_raw": 54, "cli": 23.5}, {"year": 2019, "zip": "19115", "name": "Bustleton", "lat": 40.0896, "lng": -75.0446, "population": 35346, "early_death": 2.15, "homicide": 0.0, "overdose": 0.34, "shooting": 0.06, "hospital": 1.47, "foster": 1.27, "schools": 3, "early_death_raw": 76, "homicide_raw": 0, "overdose_raw": 12, "shooting_raw": 2, "hospital_raw": 52, "foster_raw": 45, "cli": 17.7}, {"year": 2019, "zip": "19116", "name": "Somerton", "lat": 40.1156, "lng": -75.0156, "population": 34747, "early_death": 2.53, "homicide": 0.0, "overdose": 0.6, "shooting": 0.06, "hospital": 1.44, "foster": 0.89, "schools": 6, "early_death_raw": 88, "homicide_raw": 0, "overdose_raw": 21, "shooting_raw": 2, "hospital_raw": 50, "foster_raw": 31, "cli": 21.4}, {"year": 2019, "zip": "19118", "name": "Chestnut Hill", "lat": 40.0724, "lng": -75.2089, "population": 10884, "early_death": 1.29, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 1.01, "foster": 0.0, "schools": 1, "early_death_raw": 14, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 11, "foster_raw": 0, "cli": 7.3}, {"year": 2019, "zip": "19119", "name": "Mt Airy", "lat": 40.0553, "lng": -75.1893, "population": 28192, "early_death": 2.7, "homicide": 0.0, "overdose": 0.0, "shooting": 0.35, "hospital": 2.02, "foster": 3.72, "schools": 5, "early_death_raw": 76, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 10, "hospital_raw": 57, "foster_raw": 105, "cli": 22.9}, {"year": 2019, "zip": "19120", "name": "Olney", "lat": 40.034, "lng": -75.119, "population": 74060, "early_death": 2.8, "homicide": 0.23, "overdose": 0.42, "shooting": 0.61, "hospital": 1.89, "foster": 5.86, "schools": 12, "early_death_raw": 207, "homicide_raw": 17, "overdose_raw": 31, "shooting_raw": 45, "hospital_raw": 140, "foster_raw": 434, "cli": 33.0}, {"year": 2019, "zip": "19121", "name": "North Central", "lat": 39.9812, "lng": -75.1722, "population": 32385, "early_death": 4.51, "homicide": 0.34, "overdose": 0.9, "shooting": 2.07, "hospital": 3.0, "foster": 14.2, "schools": 12, "early_death_raw": 146, "homicide_raw": 11, "overdose_raw": 29, "shooting_raw": 67, "hospital_raw": 97, "foster_raw": 460, "cli": 72.4}, {"year": 2019, "zip": "19122", "name": "Norris Square", "lat": 39.9812, "lng": -75.1422, "population": 21666, "early_death": 2.35, "homicide": 0.0, "overdose": 0.0, "shooting": 0.6, "hospital": 3.05, "foster": 5.82, "schools": 9, "early_death_raw": 51, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 13, "hospital_raw": 66, "foster_raw": 126, "cli": 30.5}, {"year": 2019, "zip": "19123", "name": "Northern Liberties", "lat": 39.9643, "lng": -75.1492, "population": 17351, "early_death": 1.61, "homicide": 0.0, "overdose": 0.0, "shooting": 0.63, "hospital": 2.71, "foster": 5.13, "schools": 7, "early_death_raw": 28, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 11, "hospital_raw": 47, "foster_raw": 89, "cli": 26.6}, {"year": 2019, "zip": "19124", "name": "Frankford", "lat": 40.0234, "lng": -75.0934, "population": 70304, "early_death": 3.76, "homicide": 0.27, "overdose": 0.9, "shooting": 1.04, "hospital": 2.28, "foster": 8.66, "schools": 14, "early_death_raw": 264, "homicide_raw": 19, "overdose_raw": 63, "shooting_raw": 73, "hospital_raw": 160, "foster_raw": 609, "cli": 50.7}, {"year": 2019, "zip": "19125", "name": "Fishtown", "lat": 39.9753, "lng": -75.1282, "population": 25850, "early_death": 2.82, "homicide": 0.0, "overdose": 0.97, "shooting": 0.31, "hospital": 2.82, "foster": 3.25, "schools": 8, "early_death_raw": 73, "homicide_raw": 0, "overdose_raw": 25, "shooting_raw": 8, "hospital_raw": 73, "foster_raw": 84, "cli": 37.0}, {"year": 2019, "zip": "19126", "name": "Oak Lane", "lat": 40.0553, "lng": -75.1383, "population": 15656, "early_death": 3.32, "homicide": 0.0, "overdose": 0.0, "shooting": 0.32, "hospital": 2.94, "foster": 7.41, "schools": 2, "early_death_raw": 52, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 5, "hospital_raw": 46, "foster_raw": 116, "cli": 32.1}, {"year": 2019, "zip": "19127", "name": "Manayunk", "lat": 40.0274, "lng": -75.2249, "population": 5760, "early_death": 1.74, "homicide": 0.0, "overdose": 0.0, "shooting": 0.17, "hospital": 1.91, "foster": 0.0, "schools": 1, "early_death_raw": 10, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 1, "hospital_raw": 11, "foster_raw": 0, "cli": 13.4}, {"year": 2019, "zip": "19128", "name": "Roxborough", "lat": 40.0514, "lng": -75.2279, "population": 37644, "early_death": 2.02, "homicide": 0.0, "overdose": 0.27, "shooting": 0.05, "hospital": 1.25, "foster": 2.15, "schools": 6, "early_death_raw": 76, "homicide_raw": 0, "overdose_raw": 10, "shooting_raw": 2, "hospital_raw": 47, "foster_raw": 81, "cli": 16.6}, {"year": 2019, "zip": "19129", "name": "East Falls", "lat": 40.0144, "lng": -75.1893, "population": 11275, "early_death": 3.73, "homicide": 0.0, "overdose": 0.0, "shooting": 0.62, "hospital": 2.31, "foster": 3.81, "schools": 4, "early_death_raw": 42, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 7, "hospital_raw": 26, "foster_raw": 43, "cli": 29.7}, {"year": 2019, "zip": "19130", "name": "Fairmount", "lat": 39.9682, "lng": -75.1762, "population": 27093, "early_death": 1.66, "homicide": 0.0, "overdose": 0.0, "shooting": 0.15, "hospital": 1.07, "foster": 2.47, "schools": 7, "early_death_raw": 45, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 4, "hospital_raw": 29, "foster_raw": 67, "cli": 13.0}, {"year": 2019, "zip": "19131", "name": "Overbrook", "lat": 39.9902, "lng": -75.2249, "population": 44723, "early_death": 3.87, "homicide": 0.27, "overdose": 0.51, "shooting": 0.96, "hospital": 2.28, "foster": 7.27, "schools": 13, "early_death_raw": 173, "homicide_raw": 12, "overdose_raw": 23, "shooting_raw": 43, "hospital_raw": 102, "foster_raw": 325, "cli": 43.8}, {"year": 2019, "zip": "19132", "name": "Strawberry Mansion", "lat": 40.0014, "lng": -75.1722, "population": 31378, "early_death": 6.92, "homicide": 0.73, "overdose": 1.02, "shooting": 2.52, "hospital": 4.27, "foster": 16.48, "schools": 7, "early_death_raw": 217, "homicide_raw": 23, "overdose_raw": 32, "shooting_raw": 79, "hospital_raw": 134, "foster_raw": 517, "cli": 92.5}, {"year": 2019, "zip": "19133", "name": "Hunting Park", "lat": 39.9972, "lng": -75.1342, "population": 27102, "early_death": 5.05, "homicide": 0.63, "overdose": 1.48, "shooting": 2.07, "hospital": 2.21, "foster": 10.92, "schools": 9, "early_death_raw": 137, "homicide_raw": 17, "overdose_raw": 40, "shooting_raw": 56, "hospital_raw": 60, "foster_raw": 296, "cli": 74.3}, {"year": 2019, "zip": "19134", "name": "Kensington", "lat": 39.9953, "lng": -75.1052, "population": 62087, "early_death": 5.11, "homicide": 0.24, "overdose": 1.63, "shooting": 1.79, "hospital": 2.22, "foster": 9.52, "schools": 11, "early_death_raw": 317, "homicide_raw": 15, "overdose_raw": 101, "shooting_raw": 111, "hospital_raw": 138, "foster_raw": 591, "cli": 71.9}, {"year": 2019, "zip": "19135", "name": "Holmesburg", "lat": 40.0254, "lng": -75.0484, "population": 35427, "early_death": 3.27, "homicide": 0.0, "overdose": 0.99, "shooting": 0.71, "hospital": 1.78, "foster": 5.79, "schools": 3, "early_death_raw": 116, "homicide_raw": 0, "overdose_raw": 35, "shooting_raw": 25, "hospital_raw": 63, "foster_raw": 205, "cli": 41.9}, {"year": 2019, "zip": "19136", "name": "Pennypack", "lat": 40.0494, "lng": -75.0234, "population": 34741, "early_death": 3.22, "homicide": 0.0, "overdose": 0.72, "shooting": 0.23, "hospital": 1.96, "foster": 3.68, "schools": 5, "early_death_raw": 112, "homicide_raw": 0, "overdose_raw": 25, "shooting_raw": 8, "hospital_raw": 68, "foster_raw": 128, "cli": 31.8}, {"year": 2019, "zip": "19137", "name": "Bridesburg", "lat": 39.9993, "lng": -75.0724, "population": 8347, "early_death": 5.27, "homicide": 0.0, "overdose": 1.32, "shooting": 0.12, "hospital": 2.4, "foster": 4.91, "schools": 4, "early_death_raw": 44, "homicide_raw": 0, "overdose_raw": 11, "shooting_raw": 1, "hospital_raw": 20, "foster_raw": 41, "cli": 47.0}, {"year": 2019, "zip": "19138", "name": "West Oak Lane", "lat": 40.0554, "lng": -75.1593, "population": 32766, "early_death": 3.85, "homicide": 0.43, "overdose": 0.34, "shooting": 0.92, "hospital": 2.17, "foster": 9.09, "schools": 7, "early_death_raw": 126, "homicide_raw": 14, "overdose_raw": 11, "shooting_raw": 30, "hospital_raw": 71, "foster_raw": 298, "cli": 43.1}, {"year": 2019, "zip": "19139", "name": "West Philadelphia", "lat": 39.9612, "lng": -75.2289, "population": 46397, "early_death": 3.81, "homicide": 0.32, "overdose": 0.34, "shooting": 1.29, "hospital": 2.63, "foster": 9.03, "schools": 13, "early_death_raw": 177, "homicide_raw": 15, "overdose_raw": 16, "shooting_raw": 60, "hospital_raw": 122, "foster_raw": 419, "cli": 48.2}, {"year": 2019, "zip": "19140", "name": "North Philadelphia", "lat": 40.0124, "lng": -75.1452, "population": 51766, "early_death": 4.73, "homicide": 0.41, "overdose": 1.1, "shooting": 2.12, "hospital": 3.15, "foster": 13.06, "schools": 18, "early_death_raw": 245, "homicide_raw": 21, "overdose_raw": 57, "shooting_raw": 110, "hospital_raw": 163, "foster_raw": 676, "cli": 75.1}, {"year": 2019, "zip": "19141", "name": "Logan", "lat": 40.0374, "lng": -75.1452, "population": 34701, "early_death": 3.54, "homicide": 0.37, "overdose": 0.66, "shooting": 1.15, "hospital": 2.22, "foster": 8.82, "schools": 13, "early_death_raw": 123, "homicide_raw": 13, "overdose_raw": 23, "shooting_raw": 40, "hospital_raw": 77, "foster_raw": 306, "cli": 48.2}, {"year": 2019, "zip": "19142", "name": "Southwest", "lat": 39.9232, "lng": -75.2319, "population": 29078, "early_death": 3.44, "homicide": 0.38, "overdose": 0.52, "shooting": 1.65, "hospital": 2.41, "foster": 8.63, "schools": 8, "early_death_raw": 100, "homicide_raw": 11, "overdose_raw": 15, "shooting_raw": 48, "hospital_raw": 70, "foster_raw": 251, "cli": 51.6}, {"year": 2019, "zip": "19143", "name": "Southwest Philly", "lat": 39.9422, "lng": -75.2269, "population": 64630, "early_death": 3.91, "homicide": 0.48, "overdose": 0.48, "shooting": 1.13, "hospital": 2.74, "foster": 7.24, "schools": 14, "early_death_raw": 253, "homicide_raw": 31, "overdose_raw": 31, "shooting_raw": 73, "hospital_raw": 177, "foster_raw": 468, "cli": 46.8}, {"year": 2019, "zip": "19144", "name": "Germantown", "lat": 40.0344, "lng": -75.1753, "population": 43884, "early_death": 3.3, "homicide": 0.34, "overdose": 0.5, "shooting": 0.8, "hospital": 2.48, "foster": 9.75, "schools": 7, "early_death_raw": 145, "homicide_raw": 15, "overdose_raw": 22, "shooting_raw": 35, "hospital_raw": 109, "foster_raw": 428, "cli": 44.2}, {"year": 2019, "zip": "19145", "name": "South Philly West", "lat": 39.9182, "lng": -75.1862, "population": 46052, "early_death": 3.24, "homicide": 0.0, "overdose": 0.69, "shooting": 0.61, "hospital": 2.39, "foster": 4.34, "schools": 8, "early_death_raw": 149, "homicide_raw": 0, "overdose_raw": 32, "shooting_raw": 28, "hospital_raw": 110, "foster_raw": 200, "cli": 37.5}, {"year": 2019, "zip": "19146", "name": "South Philadelphia", "lat": 39.9372, "lng": -75.1772, "population": 39282, "early_death": 2.83, "homicide": 0.0, "overdose": 0.56, "shooting": 0.76, "hospital": 2.16, "foster": 3.97, "schools": 7, "early_death_raw": 111, "homicide_raw": 0, "overdose_raw": 22, "shooting_raw": 30, "hospital_raw": 85, "foster_raw": 156, "cli": 35.0}, {"year": 2019, "zip": "19147", "name": "Queen Village", "lat": 39.9372, "lng": -75.1542, "population": 38472, "early_death": 1.77, "homicide": 0.0, "overdose": 0.49, "shooting": 0.57, "hospital": 1.46, "foster": 1.3, "schools": 8, "early_death_raw": 68, "homicide_raw": 0, "overdose_raw": 19, "shooting_raw": 22, "hospital_raw": 56, "foster_raw": 50, "cli": 23.5}, {"year": 2019, "zip": "19148", "name": "South Philly East", "lat": 39.9142, "lng": -75.1522, "population": 52259, "early_death": 2.62, "homicide": 0.0, "overdose": 0.71, "shooting": 0.19, "hospital": 1.95, "foster": 1.32, "schools": 10, "early_death_raw": 137, "homicide_raw": 0, "overdose_raw": 37, "shooting_raw": 10, "hospital_raw": 102, "foster_raw": 69, "cli": 26.6}, {"year": 2019, "zip": "19149", "name": "Mayfair", "lat": 40.0394, "lng": -75.0664, "population": 58055, "early_death": 2.34, "homicide": 0.17, "overdose": 0.38, "shooting": 0.22, "hospital": 1.43, "foster": 3.48, "schools": 5, "early_death_raw": 136, "homicide_raw": 10, "overdose_raw": 22, "shooting_raw": 13, "hospital_raw": 83, "foster_raw": 202, "cli": 22.9}, {"year": 2019, "zip": "19150", "name": "Cedarbrook", "lat": 40.0724, "lng": -75.1593, "population": 22299, "early_death": 2.87, "homicide": 0.0, "overdose": 0.0, "shooting": 0.22, "hospital": 2.65, "foster": 4.17, "schools": 4, "early_death_raw": 64, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 5, "hospital_raw": 59, "foster_raw": 93, "cli": 24.8}, {"year": 2019, "zip": "19151", "name": "Overbrook Park", "lat": 39.9782, "lng": -75.2569, "population": 33343, "early_death": 2.7, "homicide": 0.0, "overdose": 0.0, "shooting": 0.57, "hospital": 2.07, "foster": 5.1, "schools": 7, "early_death_raw": 90, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 19, "hospital_raw": 69, "foster_raw": 170, "cli": 26.9}, {"year": 2019, "zip": "19152", "name": "Northeast", "lat": 40.0624, "lng": -75.0464, "population": 36379, "early_death": 2.64, "homicide": 0.0, "overdose": 0.49, "shooting": 0.14, "hospital": 1.57, "foster": 1.15, "schools": 4, "early_death_raw": 96, "homicide_raw": 0, "overdose_raw": 18, "shooting_raw": 5, "hospital_raw": 57, "foster_raw": 42, "cli": 21.9}, {"year": 2019, "zip": "19153", "name": "Eastwick", "lat": 39.8952, "lng": -75.2389, "population": 13006, "early_death": 3.08, "homicide": 0.0, "overdose": 0.0, "shooting": 0.46, "hospital": 1.69, "foster": 4.54, "schools": 2, "early_death_raw": 40, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 6, "hospital_raw": 22, "foster_raw": 59, "cli": 24.9}, {"year": 2019, "zip": "19154", "name": "Far Northeast", "lat": 40.0924, "lng": -74.9864, "population": 35098, "early_death": 2.39, "homicide": 0.0, "overdose": 0.48, "shooting": 0.0, "hospital": 1.25, "foster": 1.23, "schools": 4, "early_death_raw": 84, "homicide_raw": 0, "overdose_raw": 17, "shooting_raw": 0, "hospital_raw": 44, "foster_raw": 43, "cli": 18.7}, {"year": 2020, "zip": "19102", "name": "Center City East", "lat": 39.9526, "lng": -75.1652, "population": 5335, "early_death": 0.0, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 2.62, "foster": 3.75, "schools": 2, "early_death_raw": 0, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 14, "foster_raw": 20, "cli": 13.6}, {"year": 2020, "zip": "19103", "name": "Center City West", "lat": 39.9536, "lng": -75.1743, "population": 25113, "early_death": 0.88, "homicide": 0.0, "overdose": 0.0, "shooting": 0.08, "hospital": 1.04, "foster": 0.44, "schools": 4, "early_death_raw": 22, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 2, "hospital_raw": 26, "foster_raw": 11, "cli": 5.9}, {"year": 2020, "zip": "19104", "name": "University City", "lat": 39.9587, "lng": -75.2015, "population": 52480, "early_death": 2.29, "homicide": 0.21, "overdose": 0.57, "shooting": 1.11, "hospital": 1.91, "foster": 5.35, "schools": 13, "early_death_raw": 120, "homicide_raw": 11, "overdose_raw": 30, "shooting_raw": 58, "hospital_raw": 100, "foster_raw": 281, "cli": 30.6}, {"year": 2020, "zip": "19106", "name": "Old City", "lat": 39.947, "lng": -75.1445, "population": 13536, "early_death": 1.11, "homicide": 0.0, "overdose": 0.0, "shooting": 0.07, "hospital": 0.0, "foster": 0.96, "schools": 5, "early_death_raw": 15, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 1, "hospital_raw": 0, "foster_raw": 13, "cli": 4.2}, {"year": 2020, "zip": "19107", "name": "Chinatown", "lat": 39.9519, "lng": -75.1577, "population": 14689, "early_death": 1.91, "homicide": 0.0, "overdose": 0.0, "shooting": 0.27, "hospital": 3.47, "foster": 3.4, "schools": 1, "early_death_raw": 28, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 4, "hospital_raw": 51, "foster_raw": 50, "cli": 20.7}, {"year": 2020, "zip": "19111", "name": "Fox Chase", "lat": 40.0654, "lng": -75.0774, "population": 67159, "early_death": 3.11, "homicide": 0.0, "overdose": 0.51, "shooting": 0.13, "hospital": 1.76, "foster": 1.58, "schools": 8, "early_death_raw": 209, "homicide_raw": 0, "overdose_raw": 34, "shooting_raw": 9, "hospital_raw": 118, "foster_raw": 106, "cli": 20.3}, {"year": 2020, "zip": "19114", "name": "Torresdale", "lat": 40.065, "lng": -75.025, "population": 31448, "early_death": 2.77, "homicide": 0.0, "overdose": 0.41, "shooting": 0.19, "hospital": 1.84, "foster": 1.24, "schools": 3, "early_death_raw": 87, "homicide_raw": 0, "overdose_raw": 13, "shooting_raw": 6, "hospital_raw": 58, "foster_raw": 39, "cli": 18.4}, {"year": 2020, "zip": "19115", "name": "Bustleton", "lat": 40.0896, "lng": -75.0446, "population": 35504, "early_death": 2.56, "homicide": 0.0, "overdose": 0.31, "shooting": 0.0, "hospital": 1.27, "foster": 0.56, "schools": 3, "early_death_raw": 91, "homicide_raw": 0, "overdose_raw": 11, "shooting_raw": 0, "hospital_raw": 45, "foster_raw": 20, "cli": 13.2}, {"year": 2020, "zip": "19116", "name": "Somerton", "lat": 40.1156, "lng": -75.0156, "population": 33976, "early_death": 2.97, "homicide": 0.0, "overdose": 0.59, "shooting": 0.09, "hospital": 1.85, "foster": 0.62, "schools": 6, "early_death_raw": 101, "homicide_raw": 0, "overdose_raw": 20, "shooting_raw": 3, "hospital_raw": 63, "foster_raw": 21, "cli": 19.4}, {"year": 2020, "zip": "19118", "name": "Chestnut Hill", "lat": 40.0724, "lng": -75.2089, "population": 10826, "early_death": 1.29, "homicide": 0.0, "overdose": 0.0, "shooting": 0.09, "hospital": 1.29, "foster": 0.0, "schools": 1, "early_death_raw": 14, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 1, "hospital_raw": 14, "foster_raw": 0, "cli": 6.7}, {"year": 2020, "zip": "19119", "name": "Mt Airy", "lat": 40.0553, "lng": -75.1893, "population": 29055, "early_death": 3.27, "homicide": 0.0, "overdose": 0.48, "shooting": 0.38, "hospital": 1.69, "foster": 2.75, "schools": 6, "early_death_raw": 95, "homicide_raw": 0, "overdose_raw": 14, "shooting_raw": 11, "hospital_raw": 49, "foster_raw": 80, "cli": 23.2}, {"year": 2020, "zip": "19120", "name": "Olney", "lat": 40.034, "lng": -75.119, "population": 74270, "early_death": 3.84, "homicide": 0.31, "overdose": 0.65, "shooting": 0.77, "hospital": 1.79, "foster": 4.23, "schools": 12, "early_death_raw": 285, "homicide_raw": 23, "overdose_raw": 48, "shooting_raw": 57, "hospital_raw": 133, "foster_raw": 314, "cli": 30.8}, {"year": 2020, "zip": "19121", "name": "North Central", "lat": 39.9812, "lng": -75.1722, "population": 31664, "early_death": 5.62, "homicide": 0.73, "overdose": 0.73, "shooting": 2.21, "hospital": 3.38, "foster": 11.09, "schools": 12, "early_death_raw": 178, "homicide_raw": 23, "overdose_raw": 23, "shooting_raw": 70, "hospital_raw": 107, "foster_raw": 351, "cli": 58.1}, {"year": 2020, "zip": "19122", "name": "Norris Square", "lat": 39.9812, "lng": -75.1422, "population": 21067, "early_death": 3.75, "homicide": 0.0, "overdose": 0.52, "shooting": 1.14, "hospital": 3.8, "foster": 5.84, "schools": 10, "early_death_raw": 79, "homicide_raw": 0, "overdose_raw": 11, "shooting_raw": 24, "hospital_raw": 80, "foster_raw": 123, "cli": 39.3}, {"year": 2020, "zip": "19123", "name": "Northern Liberties", "lat": 39.9643, "lng": -75.1492, "population": 17793, "early_death": 1.85, "homicide": 0.0, "overdose": 0.0, "shooting": 2.36, "hospital": 1.69, "foster": 4.16, "schools": 7, "early_death_raw": 33, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 42, "hospital_raw": 30, "foster_raw": 74, "cli": 26.7}, {"year": 2020, "zip": "19124", "name": "Frankford", "lat": 40.0234, "lng": -75.0934, "population": 71858, "early_death": 4.73, "homicide": 0.39, "overdose": 1.0, "shooting": 1.5, "hospital": 2.16, "foster": 6.08, "schools": 15, "early_death_raw": 340, "homicide_raw": 28, "overdose_raw": 72, "shooting_raw": 108, "hospital_raw": 155, "foster_raw": 437, "cli": 44.1}, {"year": 2020, "zip": "19125", "name": "Fishtown", "lat": 39.9753, "lng": -75.1282, "population": 25705, "early_death": 2.84, "homicide": 0.0, "overdose": 0.51, "shooting": 0.35, "hospital": 2.02, "foster": 2.57, "schools": 8, "early_death_raw": 73, "homicide_raw": 0, "overdose_raw": 13, "shooting_raw": 9, "hospital_raw": 52, "foster_raw": 66, "cli": 23.1}, {"year": 2020, "zip": "19126", "name": "Oak Lane", "lat": 40.0553, "lng": -75.1383, "population": 16609, "early_death": 3.91, "homicide": 0.0, "overdose": 0.0, "shooting": 0.48, "hospital": 3.13, "foster": 6.26, "schools": 2, "early_death_raw": 65, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 8, "hospital_raw": 52, "foster_raw": 104, "cli": 29.6}, {"year": 2020, "zip": "19127", "name": "Manayunk", "lat": 40.0274, "lng": -75.2249, "population": 5610, "early_death": 2.5, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 0.0, "foster": 0.0, "schools": 1, "early_death_raw": 14, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 0, "foster_raw": 0, "cli": 5.2}, {"year": 2020, "zip": "19128", "name": "Roxborough", "lat": 40.0514, "lng": -75.2279, "population": 37677, "early_death": 2.47, "homicide": 0.0, "overdose": 0.32, "shooting": 0.05, "hospital": 1.54, "foster": 1.73, "schools": 6, "early_death_raw": 93, "homicide_raw": 0, "overdose_raw": 12, "shooting_raw": 2, "hospital_raw": 58, "foster_raw": 65, "cli": 16.1}, {"year": 2020, "zip": "19129", "name": "East Falls", "lat": 40.0144, "lng": -75.1893, "population": 11408, "early_death": 2.89, "homicide": 0.0, "overdose": 0.0, "shooting": 0.35, "hospital": 3.16, "foster": 3.51, "schools": 5, "early_death_raw": 33, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 4, "hospital_raw": 36, "foster_raw": 40, "cli": 22.4}, {"year": 2020, "zip": "19130", "name": "Fairmount", "lat": 39.9682, "lng": -75.1762, "population": 28010, "early_death": 1.89, "homicide": 0.0, "overdose": 0.54, "shooting": 0.29, "hospital": 0.82, "foster": 1.75, "schools": 7, "early_death_raw": 53, "homicide_raw": 0, "overdose_raw": 15, "shooting_raw": 8, "hospital_raw": 23, "foster_raw": 49, "cli": 16.5}, {"year": 2020, "zip": "19131", "name": "Overbrook", "lat": 39.9902, "lng": -75.2249, "population": 44649, "early_death": 4.57, "homicide": 0.45, "overdose": 0.69, "shooting": 1.52, "hospital": 2.4, "foster": 5.78, "schools": 14, "early_death_raw": 204, "homicide_raw": 20, "overdose_raw": 31, "shooting_raw": 68, "hospital_raw": 107, "foster_raw": 258, "cli": 40.6}, {"year": 2020, "zip": "19132", "name": "Strawberry Mansion", "lat": 40.0014, "lng": -75.1722, "population": 29850, "early_death": 9.68, "homicide": 1.27, "overdose": 1.81, "shooting": 5.29, "hospital": 5.29, "foster": 12.06, "schools": 7, "early_death_raw": 289, "homicide_raw": 38, "overdose_raw": 54, "shooting_raw": 158, "hospital_raw": 158, "foster_raw": 360, "cli": 100.0}, {"year": 2020, "zip": "19133", "name": "Hunting Park", "lat": 39.9972, "lng": -75.1342, "population": 26705, "early_death": 6.07, "homicide": 0.56, "overdose": 1.57, "shooting": 3.26, "hospital": 3.48, "foster": 9.36, "schools": 9, "early_death_raw": 162, "homicide_raw": 15, "overdose_raw": 42, "shooting_raw": 87, "hospital_raw": 93, "foster_raw": 250, "cli": 70.7}, {"year": 2020, "zip": "19134", "name": "Kensington", "lat": 39.9953, "lng": -75.1052, "population": 61615, "early_death": 5.44, "homicide": 0.37, "overdose": 1.48, "shooting": 3.55, "hospital": 2.53, "foster": 7.16, "schools": 11, "early_death_raw": 335, "homicide_raw": 23, "overdose_raw": 91, "shooting_raw": 219, "hospital_raw": 156, "foster_raw": 441, "cli": 63.4}, {"year": 2020, "zip": "19135", "name": "Holmesburg", "lat": 40.0254, "lng": -75.0484, "population": 36102, "early_death": 4.74, "homicide": 0.0, "overdose": 1.14, "shooting": 0.55, "hospital": 1.8, "foster": 4.1, "schools": 3, "early_death_raw": 171, "homicide_raw": 0, "overdose_raw": 41, "shooting_raw": 20, "hospital_raw": 65, "foster_raw": 148, "cli": 36.9}, {"year": 2020, "zip": "19136", "name": "Pennypack", "lat": 40.0494, "lng": -75.0234, "population": 34962, "early_death": 4.03, "homicide": 0.0, "overdose": 0.63, "shooting": 0.26, "hospital": 2.0, "foster": 3.43, "schools": 5, "early_death_raw": 141, "homicide_raw": 0, "overdose_raw": 22, "shooting_raw": 9, "hospital_raw": 70, "foster_raw": 120, "cli": 27.9}, {"year": 2020, "zip": "19137", "name": "Bridesburg", "lat": 39.9993, "lng": -75.0724, "population": 8652, "early_death": 3.81, "homicide": 0.0, "overdose": 0.0, "shooting": 0.58, "hospital": 2.77, "foster": 3.35, "schools": 4, "early_death_raw": 33, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 5, "hospital_raw": 24, "foster_raw": 29, "cli": 24.0}, {"year": 2020, "zip": "19138", "name": "West Oak Lane", "lat": 40.0554, "lng": -75.1593, "population": 33711, "early_death": 4.92, "homicide": 0.62, "overdose": 0.39, "shooting": 1.19, "hospital": 2.67, "foster": 7.09, "schools": 7, "early_death_raw": 166, "homicide_raw": 21, "overdose_raw": 13, "shooting_raw": 40, "hospital_raw": 90, "foster_raw": 239, "cli": 39.4}, {"year": 2020, "zip": "19139", "name": "West Philadelphia", "lat": 39.9612, "lng": -75.2289, "population": 45198, "early_death": 4.96, "homicide": 0.53, "overdose": 0.71, "shooting": 2.43, "hospital": 3.81, "foster": 7.37, "schools": 14, "early_death_raw": 224, "homicide_raw": 24, "overdose_raw": 32, "shooting_raw": 110, "hospital_raw": 172, "foster_raw": 333, "cli": 52.6}, {"year": 2020, "zip": "19140", "name": "North Philadelphia", "lat": 40.0124, "lng": -75.1452, "population": 52608, "early_death": 6.14, "homicide": 0.84, "overdose": 1.25, "shooting": 3.14, "hospital": 3.74, "foster": 9.03, "schools": 20, "early_death_raw": 323, "homicide_raw": 44, "overdose_raw": 66, "shooting_raw": 165, "hospital_raw": 197, "foster_raw": 475, "cli": 66.9}, {"year": 2020, "zip": "19141", "name": "Logan", "lat": 40.0374, "lng": -75.1452, "population": 34115, "early_death": 4.19, "homicide": 0.53, "overdose": 0.59, "shooting": 1.61, "hospital": 2.17, "foster": 7.12, "schools": 13, "early_death_raw": 143, "homicide_raw": 18, "overdose_raw": 20, "shooting_raw": 55, "hospital_raw": 74, "foster_raw": 243, "cli": 40.7}, {"year": 2020, "zip": "19142", "name": "Southwest", "lat": 39.9232, "lng": -75.2319, "population": 29864, "early_death": 4.25, "homicide": 0.74, "overdose": 0.33, "shooting": 2.58, "hospital": 2.44, "foster": 6.8, "schools": 8, "early_death_raw": 127, "homicide_raw": 22, "overdose_raw": 10, "shooting_raw": 77, "hospital_raw": 73, "foster_raw": 203, "cli": 42.8}, {"year": 2020, "zip": "19143", "name": "Southwest Philly", "lat": 39.9422, "lng": -75.2269, "population": 62927, "early_death": 4.88, "homicide": 0.67, "overdose": 0.65, "shooting": 2.02, "hospital": 3.29, "foster": 5.5, "schools": 16, "early_death_raw": 307, "homicide_raw": 42, "overdose_raw": 41, "shooting_raw": 127, "hospital_raw": 207, "foster_raw": 346, "cli": 45.3}, {"year": 2020, "zip": "19144", "name": "Germantown", "lat": 40.0344, "lng": -75.1753, "population": 44968, "early_death": 4.51, "homicide": 0.42, "overdose": 0.82, "shooting": 1.42, "hospital": 2.82, "foster": 7.96, "schools": 7, "early_death_raw": 203, "homicide_raw": 19, "overdose_raw": 37, "shooting_raw": 64, "hospital_raw": 127, "foster_raw": 358, "cli": 46.3}, {"year": 2020, "zip": "19145", "name": "South Philly West", "lat": 39.9182, "lng": -75.1862, "population": 44508, "early_death": 4.22, "homicide": 0.34, "overdose": 0.74, "shooting": 1.17, "hospital": 2.83, "foster": 3.12, "schools": 9, "early_death_raw": 188, "homicide_raw": 15, "overdose_raw": 33, "shooting_raw": 52, "hospital_raw": 126, "foster_raw": 139, "cli": 35.6}, {"year": 2020, "zip": "19146", "name": "South Philadelphia", "lat": 39.9372, "lng": -75.1772, "population": 40635, "early_death": 2.81, "homicide": 0.0, "overdose": 0.54, "shooting": 0.62, "hospital": 1.67, "foster": 3.0, "schools": 7, "early_death_raw": 114, "homicide_raw": 0, "overdose_raw": 22, "shooting_raw": 25, "hospital_raw": 68, "foster_raw": 122, "cli": 24.4}, {"year": 2020, "zip": "19147", "name": "Queen Village", "lat": 39.9372, "lng": -75.1542, "population": 38809, "early_death": 1.93, "homicide": 0.0, "overdose": 0.36, "shooting": 0.23, "hospital": 1.52, "foster": 1.11, "schools": 9, "early_death_raw": 75, "homicide_raw": 0, "overdose_raw": 14, "shooting_raw": 9, "hospital_raw": 59, "foster_raw": 43, "cli": 15.2}, {"year": 2020, "zip": "19148", "name": "South Philly East", "lat": 39.9142, "lng": -75.1522, "population": 51754, "early_death": 3.4, "homicide": 0.0, "overdose": 0.77, "shooting": 0.21, "hospital": 2.03, "foster": 1.16, "schools": 11, "early_death_raw": 176, "homicide_raw": 0, "overdose_raw": 40, "shooting_raw": 11, "hospital_raw": 105, "foster_raw": 60, "cli": 24.2}, {"year": 2020, "zip": "19149", "name": "Mayfair", "lat": 40.0394, "lng": -75.0664, "population": 58811, "early_death": 2.5, "homicide": 0.22, "overdose": 0.46, "shooting": 0.24, "hospital": 1.5, "foster": 2.6, "schools": 5, "early_death_raw": 147, "homicide_raw": 13, "overdose_raw": 27, "shooting_raw": 14, "hospital_raw": 88, "foster_raw": 153, "cli": 19.9}, {"year": 2020, "zip": "19150", "name": "Cedarbrook", "lat": 40.0724, "lng": -75.1593, "population": 22916, "early_death": 3.93, "homicide": 0.44, "overdose": 0.7, "shooting": 0.52, "hospital": 2.36, "foster": 2.79, "schools": 4, "early_death_raw": 90, "homicide_raw": 10, "overdose_raw": 16, "shooting_raw": 12, "hospital_raw": 54, "foster_raw": 64, "cli": 29.6}, {"year": 2020, "zip": "19151", "name": "Overbrook Park", "lat": 39.9782, "lng": -75.2569, "population": 32306, "early_death": 4.05, "homicide": 0.43, "overdose": 0.59, "shooting": 0.8, "hospital": 2.66, "foster": 4.58, "schools": 8, "early_death_raw": 131, "homicide_raw": 14, "overdose_raw": 19, "shooting_raw": 26, "hospital_raw": 86, "foster_raw": 148, "cli": 33.8}, {"year": 2020, "zip": "19152", "name": "Northeast", "lat": 40.0624, "lng": -75.0464, "population": 37436, "early_death": 2.67, "homicide": 0.0, "overdose": 0.43, "shooting": 0.08, "hospital": 1.52, "foster": 1.07, "schools": 4, "early_death_raw": 100, "homicide_raw": 0, "overdose_raw": 16, "shooting_raw": 3, "hospital_raw": 57, "foster_raw": 40, "cli": 16.7}, {"year": 2020, "zip": "19153", "name": "Eastwick", "lat": 39.8952, "lng": -75.2389, "population": 12909, "early_death": 4.11, "homicide": 0.0, "overdose": 0.0, "shooting": 0.85, "hospital": 2.71, "foster": 2.79, "schools": 2, "early_death_raw": 53, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 11, "hospital_raw": 35, "foster_raw": 36, "cli": 24.8}, {"year": 2020, "zip": "19154", "name": "Far Northeast", "lat": 40.0924, "lng": -74.9864, "population": 34946, "early_death": 2.89, "homicide": 0.0, "overdose": 0.43, "shooting": 0.0, "hospital": 1.26, "foster": 1.37, "schools": 5, "early_death_raw": 101, "homicide_raw": 0, "overdose_raw": 15, "shooting_raw": 0, "hospital_raw": 44, "foster_raw": 48, "cli": 16.6}, {"year": 2021, "zip": "19102", "name": "Center City East", "lat": 39.9526, "lng": -75.1652, "population": 5108, "early_death": 0.0, "homicide": 0.0, "overdose": 0.0, "shooting": 0.59, "hospital": 3.13, "foster": 3.72, "schools": 2, "early_death_raw": 0, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 3, "hospital_raw": 16, "foster_raw": 19, "cli": 19.4}, {"year": 2021, "zip": "19103", "name": "Center City West", "lat": 39.9536, "lng": -75.1743, "population": 25368, "early_death": 0.83, "homicide": 0.0, "overdose": 0.0, "shooting": 0.08, "hospital": 0.95, "foster": 0.0, "schools": 4, "early_death_raw": 21, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 2, "hospital_raw": 24, "foster_raw": 0, "cli": 5.5}, {"year": 2021, "zip": "19104", "name": "University City", "lat": 39.9587, "lng": -75.2015, "population": 52126, "early_death": 2.38, "homicide": 0.23, "overdose": 0.42, "shooting": 1.71, "hospital": 2.36, "foster": 5.64, "schools": 14, "early_death_raw": 124, "homicide_raw": 12, "overdose_raw": 22, "shooting_raw": 89, "hospital_raw": 123, "foster_raw": 294, "cli": 36.2}, {"year": 2021, "zip": "19106", "name": "Old City", "lat": 39.947, "lng": -75.1445, "population": 14211, "early_death": 0.91, "homicide": 0.0, "overdose": 0.0, "shooting": 0.14, "hospital": 0.77, "foster": 0.0, "schools": 5, "early_death_raw": 13, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 2, "hospital_raw": 11, "foster_raw": 0, "cli": 5.4}, {"year": 2021, "zip": "19107", "name": "Chinatown", "lat": 39.9519, "lng": -75.1577, "population": 14984, "early_death": 2.47, "homicide": 0.0, "overdose": 0.8, "shooting": 0.4, "hospital": 3.4, "foster": 4.34, "schools": 1, "early_death_raw": 37, "homicide_raw": 0, "overdose_raw": 12, "shooting_raw": 6, "hospital_raw": 51, "foster_raw": 65, "cli": 34.1}, {"year": 2021, "zip": "19111", "name": "Fox Chase", "lat": 40.0654, "lng": -75.0774, "population": 68452, "early_death": 2.41, "homicide": 0.19, "overdose": 0.39, "shooting": 0.28, "hospital": 1.49, "foster": 1.34, "schools": 8, "early_death_raw": 165, "homicide_raw": 13, "overdose_raw": 27, "shooting_raw": 19, "hospital_raw": 102, "foster_raw": 92, "cli": 18.2}, {"year": 2021, "zip": "19114", "name": "Torresdale", "lat": 40.065, "lng": -75.025, "population": 31815, "early_death": 2.86, "homicide": 0.0, "overdose": 0.75, "shooting": 0.0, "hospital": 1.57, "foster": 1.73, "schools": 3, "early_death_raw": 91, "homicide_raw": 0, "overdose_raw": 24, "shooting_raw": 0, "hospital_raw": 50, "foster_raw": 55, "cli": 22.2}, {"year": 2021, "zip": "19115", "name": "Bustleton", "lat": 40.0896, "lng": -75.0446, "population": 35901, "early_death": 2.59, "homicide": 0.0, "overdose": 0.47, "shooting": 0.03, "hospital": 1.64, "foster": 0.42, "schools": 3, "early_death_raw": 93, "homicide_raw": 0, "overdose_raw": 17, "shooting_raw": 1, "hospital_raw": 59, "foster_raw": 15, "cli": 17.0}, {"year": 2021, "zip": "19116", "name": "Somerton", "lat": 40.1156, "lng": -75.0156, "population": 33573, "early_death": 2.56, "homicide": 0.0, "overdose": 0.39, "shooting": 0.06, "hospital": 1.82, "foster": 0.45, "schools": 6, "early_death_raw": 86, "homicide_raw": 0, "overdose_raw": 13, "shooting_raw": 2, "hospital_raw": 61, "foster_raw": 15, "cli": 16.9}, {"year": 2021, "zip": "19118", "name": "Chestnut Hill", "lat": 40.0724, "lng": -75.2089, "population": 10743, "early_death": 1.49, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 1.86, "foster": 0.0, "schools": 1, "early_death_raw": 16, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 20, "foster_raw": 0, "cli": 9.5}, {"year": 2021, "zip": "19119", "name": "Mt Airy", "lat": 40.0553, "lng": -75.1893, "population": 29206, "early_death": 3.39, "homicide": 0.0, "overdose": 0.48, "shooting": 0.24, "hospital": 2.29, "foster": 2.6, "schools": 6, "early_death_raw": 99, "homicide_raw": 0, "overdose_raw": 14, "shooting_raw": 7, "hospital_raw": 67, "foster_raw": 76, "cli": 25.9}, {"year": 2021, "zip": "19120", "name": "Olney", "lat": 40.034, "lng": -75.119, "population": 73896, "early_death": 3.5, "homicide": 0.41, "overdose": 0.49, "shooting": 0.97, "hospital": 2.0, "foster": 3.83, "schools": 12, "early_death_raw": 259, "homicide_raw": 30, "overdose_raw": 36, "shooting_raw": 72, "hospital_raw": 148, "foster_raw": 283, "cli": 31.4}, {"year": 2021, "zip": "19121", "name": "North Central", "lat": 39.9812, "lng": -75.1722, "population": 34702, "early_death": 4.75, "homicide": 0.69, "overdose": 0.66, "shooting": 3.29, "hospital": 3.37, "foster": 9.86, "schools": 12, "early_death_raw": 165, "homicide_raw": 24, "overdose_raw": 23, "shooting_raw": 114, "hospital_raw": 117, "foster_raw": 342, "cli": 63.2}, {"year": 2021, "zip": "19122", "name": "Norris Square", "lat": 39.9812, "lng": -75.1422, "population": 22080, "early_death": 3.03, "homicide": 0.0, "overdose": 0.0, "shooting": 1.31, "hospital": 4.03, "foster": 4.48, "schools": 11, "early_death_raw": 67, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 29, "hospital_raw": 89, "foster_raw": 99, "cli": 34.8}, {"year": 2021, "zip": "19123", "name": "Northern Liberties", "lat": 39.9643, "lng": -75.1492, "population": 18071, "early_death": 2.77, "homicide": 0.0, "overdose": 0.0, "shooting": 0.77, "hospital": 2.16, "foster": 4.09, "schools": 7, "early_death_raw": 50, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 14, "hospital_raw": 39, "foster_raw": 74, "cli": 24.6}, {"year": 2021, "zip": "19124", "name": "Frankford", "lat": 40.0234, "lng": -75.0934, "population": 71496, "early_death": 4.7, "homicide": 0.49, "overdose": 1.24, "shooting": 1.17, "hospital": 2.84, "foster": 5.79, "schools": 15, "early_death_raw": 336, "homicide_raw": 35, "overdose_raw": 89, "shooting_raw": 84, "hospital_raw": 203, "foster_raw": 414, "cli": 48.7}, {"year": 2021, "zip": "19125", "name": "Fishtown", "lat": 39.9753, "lng": -75.1282, "population": 24948, "early_death": 2.53, "homicide": 0.0, "overdose": 0.8, "shooting": 0.76, "hospital": 2.81, "foster": 1.92, "schools": 8, "early_death_raw": 63, "homicide_raw": 0, "overdose_raw": 20, "shooting_raw": 19, "hospital_raw": 70, "foster_raw": 48, "cli": 30.4}, {"year": 2021, "zip": "19126", "name": "Oak Lane", "lat": 40.0553, "lng": -75.1383, "population": 18269, "early_death": 5.04, "homicide": 0.0, "overdose": 0.77, "shooting": 1.09, "hospital": 3.23, "foster": 4.38, "schools": 2, "early_death_raw": 92, "homicide_raw": 0, "overdose_raw": 14, "shooting_raw": 20, "hospital_raw": 59, "foster_raw": 80, "cli": 43.4}, {"year": 2021, "zip": "19127", "name": "Manayunk", "lat": 40.0274, "lng": -75.2249, "population": 5522, "early_death": 2.9, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 0.0, "foster": 0.0, "schools": 1, "early_death_raw": 16, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 0, "foster_raw": 0, "cli": 7.0}, {"year": 2021, "zip": "19128", "name": "Roxborough", "lat": 40.0514, "lng": -75.2279, "population": 38840, "early_death": 2.19, "homicide": 0.0, "overdose": 0.44, "shooting": 0.13, "hospital": 1.42, "foster": 2.14, "schools": 6, "early_death_raw": 85, "homicide_raw": 0, "overdose_raw": 17, "shooting_raw": 5, "hospital_raw": 55, "foster_raw": 83, "cli": 18.4}, {"year": 2021, "zip": "19129", "name": "East Falls", "lat": 40.0144, "lng": -75.1893, "population": 11551, "early_death": 2.34, "homicide": 0.0, "overdose": 0.0, "shooting": 1.21, "hospital": 1.73, "foster": 3.12, "schools": 5, "early_death_raw": 27, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 14, "hospital_raw": 20, "foster_raw": 36, "cli": 23.0}, {"year": 2021, "zip": "19130", "name": "Fairmount", "lat": 39.9682, "lng": -75.1762, "population": 29378, "early_death": 1.5, "homicide": 0.0, "overdose": 0.0, "shooting": 0.24, "hospital": 1.46, "foster": 1.67, "schools": 8, "early_death_raw": 44, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 7, "hospital_raw": 43, "foster_raw": 49, "cli": 12.4}, {"year": 2021, "zip": "19131", "name": "Overbrook", "lat": 39.9902, "lng": -75.2249, "population": 44791, "early_death": 4.13, "homicide": 0.33, "overdose": 0.54, "shooting": 1.5, "hospital": 3.59, "foster": 5.22, "schools": 14, "early_death_raw": 185, "homicide_raw": 15, "overdose_raw": 24, "shooting_raw": 67, "hospital_raw": 161, "foster_raw": 234, "cli": 43.7}, {"year": 2021, "zip": "19132", "name": "Strawberry Mansion", "lat": 40.0014, "lng": -75.1722, "population": 32802, "early_death": 8.29, "homicide": 1.34, "overdose": 1.92, "shooting": 4.51, "hospital": 4.69, "foster": 12.19, "schools": 7, "early_death_raw": 272, "homicide_raw": 44, "overdose_raw": 63, "shooting_raw": 148, "hospital_raw": 154, "foster_raw": 400, "cli": 99.1}, {"year": 2021, "zip": "19133", "name": "Hunting Park", "lat": 39.9972, "lng": -75.1342, "population": 25893, "early_death": 5.87, "homicide": 0.7, "overdose": 1.54, "shooting": 3.48, "hospital": 3.24, "foster": 8.46, "schools": 9, "early_death_raw": 152, "homicide_raw": 18, "overdose_raw": 40, "shooting_raw": 90, "hospital_raw": 84, "foster_raw": 219, "cli": 73.0}, {"year": 2021, "zip": "19134", "name": "Kensington", "lat": 39.9953, "lng": -75.1052, "population": 59590, "early_death": 5.99, "homicide": 0.6, "overdose": 2.01, "shooting": 3.27, "hospital": 3.05, "foster": 6.9, "schools": 11, "early_death_raw": 357, "homicide_raw": 36, "overdose_raw": 120, "shooting_raw": 195, "hospital_raw": 182, "foster_raw": 411, "cli": 73.7}, {"year": 2021, "zip": "19135", "name": "Holmesburg", "lat": 40.0254, "lng": -75.0484, "population": 36304, "early_death": 4.46, "homicide": 0.39, "overdose": 1.07, "shooting": 0.44, "hospital": 1.85, "foster": 4.63, "schools": 3, "early_death_raw": 162, "homicide_raw": 14, "overdose_raw": 39, "shooting_raw": 16, "hospital_raw": 67, "foster_raw": 168, "cli": 37.4}, {"year": 2021, "zip": "19136", "name": "Pennypack", "lat": 40.0494, "lng": -75.0234, "population": 37193, "early_death": 3.98, "homicide": 0.0, "overdose": 0.81, "shooting": 0.67, "hospital": 1.86, "foster": 3.07, "schools": 5, "early_death_raw": 148, "homicide_raw": 0, "overdose_raw": 30, "shooting_raw": 25, "hospital_raw": 69, "foster_raw": 114, "cli": 32.4}, {"year": 2021, "zip": "19137", "name": "Bridesburg", "lat": 39.9993, "lng": -75.0724, "population": 8470, "early_death": 6.73, "homicide": 0.0, "overdose": 1.3, "shooting": 0.71, "hospital": 2.24, "foster": 4.84, "schools": 4, "early_death_raw": 57, "homicide_raw": 0, "overdose_raw": 11, "shooting_raw": 6, "hospital_raw": 19, "foster_raw": 41, "cli": 48.2}, {"year": 2021, "zip": "19138", "name": "West Oak Lane", "lat": 40.0554, "lng": -75.1593, "population": 33197, "early_death": 4.52, "homicide": 0.48, "overdose": 0.51, "shooting": 0.75, "hospital": 2.68, "foster": 6.75, "schools": 7, "early_death_raw": 150, "homicide_raw": 16, "overdose_raw": 17, "shooting_raw": 25, "hospital_raw": 89, "foster_raw": 224, "cli": 39.8}, {"year": 2021, "zip": "19139", "name": "West Philadelphia", "lat": 39.9612, "lng": -75.2289, "population": 45642, "early_death": 4.47, "homicide": 0.59, "overdose": 0.57, "shooting": 2.63, "hospital": 4.01, "foster": 7.03, "schools": 14, "early_death_raw": 204, "homicide_raw": 27, "overdose_raw": 26, "shooting_raw": 120, "hospital_raw": 183, "foster_raw": 321, "cli": 55.4}, {"year": 2021, "zip": "19140", "name": "North Philadelphia", "lat": 40.0124, "lng": -75.1452, "population": 54831, "early_death": 6.24, "homicide": 1.0, "overdose": 1.13, "shooting": 2.81, "hospital": 4.03, "foster": 8.95, "schools": 21, "early_death_raw": 342, "homicide_raw": 55, "overdose_raw": 62, "shooting_raw": 154, "hospital_raw": 221, "foster_raw": 491, "cli": 69.4}, {"year": 2021, "zip": "19141", "name": "Logan", "lat": 40.0374, "lng": -75.1452, "population": 33641, "early_death": 4.28, "homicide": 0.71, "overdose": 0.83, "shooting": 1.93, "hospital": 3.21, "foster": 6.75, "schools": 13, "early_death_raw": 144, "homicide_raw": 24, "overdose_raw": 28, "shooting_raw": 65, "hospital_raw": 108, "foster_raw": 227, "cli": 50.6}, {"year": 2021, "zip": "19142", "name": "Southwest", "lat": 39.9232, "lng": -75.2319, "population": 29993, "early_death": 4.43, "homicide": 0.4, "overdose": 0.57, "shooting": 1.37, "hospital": 2.9, "foster": 6.13, "schools": 8, "early_death_raw": 133, "homicide_raw": 12, "overdose_raw": 17, "shooting_raw": 41, "hospital_raw": 87, "foster_raw": 184, "cli": 43.3}, {"year": 2021, "zip": "19143", "name": "Southwest Philly", "lat": 39.9422, "lng": -75.2269, "population": 63861, "early_death": 4.74, "homicide": 0.6, "overdose": 0.69, "shooting": 2.0, "hospital": 3.4, "foster": 5.25, "schools": 16, "early_death_raw": 303, "homicide_raw": 38, "overdose_raw": 44, "shooting_raw": 128, "hospital_raw": 217, "foster_raw": 335, "cli": 48.9}, {"year": 2021, "zip": "19144", "name": "Germantown", "lat": 40.0344, "lng": -75.1753, "population": 46854, "early_death": 4.46, "homicide": 0.64, "overdose": 0.88, "shooting": 1.6, "hospital": 3.24, "foster": 7.21, "schools": 8, "early_death_raw": 209, "homicide_raw": 30, "overdose_raw": 41, "shooting_raw": 75, "hospital_raw": 152, "foster_raw": 338, "cli": 50.6}, {"year": 2021, "zip": "19145", "name": "South Philly West", "lat": 39.9182, "lng": -75.1862, "population": 45101, "early_death": 3.68, "homicide": 0.0, "overdose": 0.91, "shooting": 0.67, "hospital": 3.04, "foster": 2.99, "schools": 9, "early_death_raw": 166, "homicide_raw": 0, "overdose_raw": 41, "shooting_raw": 30, "hospital_raw": 137, "foster_raw": 135, "cli": 36.3}, {"year": 2021, "zip": "19146", "name": "South Philadelphia", "lat": 39.9372, "lng": -75.1772, "population": 40983, "early_death": 2.61, "homicide": 0.0, "overdose": 0.46, "shooting": 0.29, "hospital": 2.2, "foster": 2.9, "schools": 7, "early_death_raw": 107, "homicide_raw": 0, "overdose_raw": 19, "shooting_raw": 12, "hospital_raw": 90, "foster_raw": 119, "cli": 24.3}, {"year": 2021, "zip": "19147", "name": "Queen Village", "lat": 39.9372, "lng": -75.1542, "population": 39335, "early_death": 1.53, "homicide": 0.0, "overdose": 0.33, "shooting": 0.48, "hospital": 1.75, "foster": 0.84, "schools": 10, "early_death_raw": 60, "homicide_raw": 0, "overdose_raw": 13, "shooting_raw": 19, "hospital_raw": 69, "foster_raw": 33, "cli": 16.6}, {"year": 2021, "zip": "19148", "name": "South Philly East", "lat": 39.9142, "lng": -75.1522, "population": 51010, "early_death": 3.1, "homicide": 0.0, "overdose": 0.59, "shooting": 0.33, "hospital": 2.63, "foster": 1.51, "schools": 11, "early_death_raw": 158, "homicide_raw": 0, "overdose_raw": 30, "shooting_raw": 17, "hospital_raw": 134, "foster_raw": 77, "cli": 26.1}, {"year": 2021, "zip": "19149", "name": "Mayfair", "lat": 40.0394, "lng": -75.0664, "population": 59899, "early_death": 2.79, "homicide": 0.17, "overdose": 0.53, "shooting": 0.45, "hospital": 1.65, "foster": 2.57, "schools": 5, "early_death_raw": 167, "homicide_raw": 10, "overdose_raw": 32, "shooting_raw": 27, "hospital_raw": 99, "foster_raw": 154, "cli": 24.0}, {"year": 2021, "zip": "19150", "name": "Cedarbrook", "lat": 40.0724, "lng": -75.1593, "population": 22760, "early_death": 3.65, "homicide": 0.0, "overdose": 0.0, "shooting": 0.44, "hospital": 3.03, "foster": 2.77, "schools": 4, "early_death_raw": 83, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 10, "hospital_raw": 69, "foster_raw": 63, "cli": 25.5}, {"year": 2021, "zip": "19151", "name": "Overbrook Park", "lat": 39.9782, "lng": -75.2569, "population": 31815, "early_death": 4.15, "homicide": 0.38, "overdose": 0.0, "shooting": 0.85, "hospital": 2.36, "foster": 4.15, "schools": 8, "early_death_raw": 132, "homicide_raw": 12, "overdose_raw": 0, "shooting_raw": 27, "hospital_raw": 75, "foster_raw": 132, "cli": 29.1}, {"year": 2021, "zip": "19152", "name": "Northeast", "lat": 40.0624, "lng": -75.0464, "population": 35528, "early_death": 3.07, "homicide": 0.0, "overdose": 0.39, "shooting": 0.2, "hospital": 1.94, "foster": 0.68, "schools": 4, "early_death_raw": 109, "homicide_raw": 0, "overdose_raw": 14, "shooting_raw": 7, "hospital_raw": 69, "foster_raw": 24, "cli": 19.7}, {"year": 2021, "zip": "19153", "name": "Eastwick", "lat": 39.8952, "lng": -75.2389, "population": 12810, "early_death": 3.9, "homicide": 0.0, "overdose": 0.0, "shooting": 0.78, "hospital": 2.65, "foster": 3.12, "schools": 2, "early_death_raw": 50, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 10, "hospital_raw": 34, "foster_raw": 40, "cli": 27.3}, {"year": 2021, "zip": "19154", "name": "Far Northeast", "lat": 40.0924, "lng": -74.9864, "population": 34803, "early_death": 3.19, "homicide": 0.0, "overdose": 0.66, "shooting": 0.06, "hospital": 1.49, "foster": 1.18, "schools": 5, "early_death_raw": 111, "homicide_raw": 0, "overdose_raw": 23, "shooting_raw": 2, "hospital_raw": 52, "foster_raw": 41, "cli": 21.3}, {"year": 2022, "zip": "19102", "name": "Center City East", "lat": 39.9526, "lng": -75.1652, "population": 5635, "early_death": 0.0, "homicide": 0.0, "overdose": 0.0, "shooting": 0.35, "hospital": 2.13, "foster": 6.74, "schools": 2, "early_death_raw": 0, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 2, "hospital_raw": 12, "foster_raw": 38, "cli": 21.2}, {"year": 2022, "zip": "19103", "name": "Center City West", "lat": 39.9536, "lng": -75.1743, "population": 25705, "early_death": 0.86, "homicide": 0.0, "overdose": 0.0, "shooting": 0.16, "hospital": 1.01, "foster": 0.43, "schools": 4, "early_death_raw": 22, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 4, "hospital_raw": 26, "foster_raw": 11, "cli": 7.3}, {"year": 2022, "zip": "19104", "name": "University City", "lat": 39.9587, "lng": -75.2015, "population": 53679, "early_death": 2.46, "homicide": 0.26, "overdose": 0.37, "shooting": 1.06, "hospital": 2.48, "foster": 4.92, "schools": 14, "early_death_raw": 132, "homicide_raw": 14, "overdose_raw": 20, "shooting_raw": 57, "hospital_raw": 133, "foster_raw": 264, "cli": 33.9}, {"year": 2022, "zip": "19106", "name": "Old City", "lat": 39.947, "lng": -75.1445, "population": 14012, "early_death": 0.71, "homicide": 0.0, "overdose": 0.0, "shooting": 0.43, "hospital": 1.21, "foster": 0.0, "schools": 5, "early_death_raw": 10, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 6, "hospital_raw": 17, "foster_raw": 0, "cli": 8.4}, {"year": 2022, "zip": "19107", "name": "Chinatown", "lat": 39.9519, "lng": -75.1577, "population": 15232, "early_death": 2.36, "homicide": 0.0, "overdose": 0.72, "shooting": 0.59, "hospital": 4.2, "foster": 4.73, "schools": 1, "early_death_raw": 36, "homicide_raw": 0, "overdose_raw": 11, "shooting_raw": 9, "hospital_raw": 64, "foster_raw": 72, "cli": 40.1}, {"year": 2022, "zip": "19111", "name": "Fox Chase", "lat": 40.0654, "lng": -75.0774, "population": 67149, "early_death": 2.64, "homicide": 0.21, "overdose": 0.54, "shooting": 0.15, "hospital": 2.07, "foster": 1.38, "schools": 9, "early_death_raw": 177, "homicide_raw": 14, "overdose_raw": 36, "shooting_raw": 10, "hospital_raw": 139, "foster_raw": 93, "cli": 23.2}, {"year": 2022, "zip": "19114", "name": "Torresdale", "lat": 40.065, "lng": -75.025, "population": 31551, "early_death": 2.5, "homicide": 0.0, "overdose": 0.51, "shooting": 0.13, "hospital": 2.22, "foster": 1.14, "schools": 3, "early_death_raw": 79, "homicide_raw": 0, "overdose_raw": 16, "shooting_raw": 4, "hospital_raw": 70, "foster_raw": 36, "cli": 22.4}, {"year": 2022, "zip": "19115", "name": "Bustleton", "lat": 40.0896, "lng": -75.0446, "population": 35103, "early_death": 2.51, "homicide": 0.0, "overdose": 0.4, "shooting": 0.0, "hospital": 1.54, "foster": 0.71, "schools": 3, "early_death_raw": 88, "homicide_raw": 0, "overdose_raw": 14, "shooting_raw": 0, "hospital_raw": 54, "foster_raw": 25, "cli": 17.4}, {"year": 2022, "zip": "19116", "name": "Somerton", "lat": 40.1156, "lng": -75.0156, "population": 33648, "early_death": 2.65, "homicide": 0.0, "overdose": 0.62, "shooting": 0.0, "hospital": 2.14, "foster": 0.59, "schools": 6, "early_death_raw": 89, "homicide_raw": 0, "overdose_raw": 21, "shooting_raw": 0, "hospital_raw": 72, "foster_raw": 20, "cli": 22.0}, {"year": 2022, "zip": "19118", "name": "Chestnut Hill", "lat": 40.0724, "lng": -75.2089, "population": 10599, "early_death": 1.89, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 1.42, "foster": 0.0, "schools": 1, "early_death_raw": 20, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 15, "foster_raw": 0, "cli": 9.5}, {"year": 2022, "zip": "19119", "name": "Mt Airy", "lat": 40.0553, "lng": -75.1893, "population": 29079, "early_death": 2.41, "homicide": 0.0, "overdose": 0.0, "shooting": 0.21, "hospital": 2.3, "foster": 2.3, "schools": 6, "early_death_raw": 70, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 6, "hospital_raw": 67, "foster_raw": 67, "cli": 19.2}, {"year": 2022, "zip": "19120", "name": "Olney", "lat": 40.034, "lng": -75.119, "population": 71360, "early_death": 3.43, "homicide": 0.29, "overdose": 0.73, "shooting": 0.99, "hospital": 2.09, "foster": 3.55, "schools": 13, "early_death_raw": 245, "homicide_raw": 21, "overdose_raw": 52, "shooting_raw": 71, "hospital_raw": 149, "foster_raw": 253, "cli": 36.5}, {"year": 2022, "zip": "19121", "name": "North Central", "lat": 39.9812, "lng": -75.1722, "population": 37740, "early_death": 4.03, "homicide": 0.45, "overdose": 0.82, "shooting": 3.31, "hospital": 3.92, "foster": 8.51, "schools": 12, "early_death_raw": 152, "homicide_raw": 17, "overdose_raw": 31, "shooting_raw": 125, "hospital_raw": 148, "foster_raw": 321, "cli": 67.8}, {"year": 2022, "zip": "19122", "name": "Norris Square", "lat": 39.9812, "lng": -75.1422, "population": 22898, "early_death": 2.45, "homicide": 0.0, "overdose": 0.52, "shooting": 1.44, "hospital": 4.24, "foster": 4.11, "schools": 11, "early_death_raw": 56, "homicide_raw": 0, "overdose_raw": 12, "shooting_raw": 33, "hospital_raw": 97, "foster_raw": 94, "cli": 42.2}, {"year": 2022, "zip": "19123", "name": "Northern Liberties", "lat": 39.9643, "lng": -75.1492, "population": 18474, "early_death": 2.6, "homicide": 0.0, "overdose": 0.76, "shooting": 1.35, "hospital": 3.03, "foster": 4.17, "schools": 7, "early_death_raw": 48, "homicide_raw": 0, "overdose_raw": 14, "shooting_raw": 25, "hospital_raw": 56, "foster_raw": 77, "cli": 41.0}, {"year": 2022, "zip": "19124", "name": "Frankford", "lat": 40.0234, "lng": -75.0934, "population": 72919, "early_death": 4.21, "homicide": 0.58, "overdose": 0.86, "shooting": 2.02, "hospital": 2.93, "foster": 4.62, "schools": 15, "early_death_raw": 307, "homicide_raw": 42, "overdose_raw": 63, "shooting_raw": 147, "hospital_raw": 214, "foster_raw": 337, "cli": 50.8}, {"year": 2022, "zip": "19125", "name": "Fishtown", "lat": 39.9753, "lng": -75.1282, "population": 24601, "early_death": 2.85, "homicide": 0.0, "overdose": 0.85, "shooting": 0.61, "hospital": 3.74, "foster": 2.36, "schools": 8, "early_death_raw": 70, "homicide_raw": 0, "overdose_raw": 21, "shooting_raw": 15, "hospital_raw": 92, "foster_raw": 58, "cli": 37.2}, {"year": 2022, "zip": "19126", "name": "Oak Lane", "lat": 40.0553, "lng": -75.1383, "population": 17627, "early_death": 3.63, "homicide": 0.0, "overdose": 0.74, "shooting": 0.74, "hospital": 3.97, "foster": 4.14, "schools": 2, "early_death_raw": 64, "homicide_raw": 0, "overdose_raw": 13, "shooting_raw": 13, "hospital_raw": 70, "foster_raw": 73, "cli": 42.7}, {"year": 2022, "zip": "19127", "name": "Manayunk", "lat": 40.0274, "lng": -75.2249, "population": 5623, "early_death": 1.96, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 0.0, "foster": 2.49, "schools": 1, "early_death_raw": 11, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 0, "foster_raw": 14, "cli": 9.6}, {"year": 2022, "zip": "19128", "name": "Roxborough", "lat": 40.0514, "lng": -75.2279, "population": 38381, "early_death": 1.9, "homicide": 0.0, "overdose": 0.0, "shooting": 0.21, "hospital": 1.35, "foster": 1.98, "schools": 6, "early_death_raw": 73, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 8, "hospital_raw": 52, "foster_raw": 76, "cli": 14.2}, {"year": 2022, "zip": "19129", "name": "East Falls", "lat": 40.0144, "lng": -75.1893, "population": 11370, "early_death": 3.34, "homicide": 0.0, "overdose": 0.0, "shooting": 0.35, "hospital": 3.52, "foster": 3.87, "schools": 5, "early_death_raw": 38, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 4, "hospital_raw": 40, "foster_raw": 44, "cli": 29.2}, {"year": 2022, "zip": "19130", "name": "Fairmount", "lat": 39.9682, "lng": -75.1762, "population": 30280, "early_death": 2.61, "homicide": 0.0, "overdose": 0.89, "shooting": 0.33, "hospital": 1.62, "foster": 1.42, "schools": 8, "early_death_raw": 79, "homicide_raw": 0, "overdose_raw": 27, "shooting_raw": 10, "hospital_raw": 49, "foster_raw": 43, "cli": 26.8}, {"year": 2022, "zip": "19131", "name": "Overbrook", "lat": 39.9902, "lng": -75.2249, "population": 44116, "early_death": 3.92, "homicide": 0.34, "overdose": 0.52, "shooting": 1.34, "hospital": 4.03, "foster": 5.12, "schools": 15, "early_death_raw": 173, "homicide_raw": 15, "overdose_raw": 23, "shooting_raw": 59, "hospital_raw": 178, "foster_raw": 226, "cli": 46.5}, {"year": 2022, "zip": "19132", "name": "Strawberry Mansion", "lat": 40.0014, "lng": -75.1722, "population": 32371, "early_death": 7.66, "homicide": 1.08, "overdose": 1.67, "shooting": 4.17, "hospital": 4.63, "foster": 11.09, "schools": 7, "early_death_raw": 248, "homicide_raw": 35, "overdose_raw": 54, "shooting_raw": 135, "hospital_raw": 150, "foster_raw": 359, "cli": 99.2}, {"year": 2022, "zip": "19133", "name": "Hunting Park", "lat": 39.9972, "lng": -75.1342, "population": 25642, "early_death": 5.03, "homicide": 0.58, "overdose": 1.44, "shooting": 3.04, "hospital": 3.82, "foster": 8.15, "schools": 9, "early_death_raw": 129, "homicide_raw": 15, "overdose_raw": 37, "shooting_raw": 78, "hospital_raw": 98, "foster_raw": 209, "cli": 75.0}, {"year": 2022, "zip": "19134", "name": "Kensington", "lat": 39.9953, "lng": -75.1052, "population": 60229, "early_death": 5.78, "homicide": 0.33, "overdose": 1.74, "shooting": 3.7, "hospital": 3.7, "foster": 5.98, "schools": 13, "early_death_raw": 348, "homicide_raw": 20, "overdose_raw": 105, "shooting_raw": 223, "hospital_raw": 223, "foster_raw": 360, "cli": 80.0}, {"year": 2022, "zip": "19135", "name": "Holmesburg", "lat": 40.0254, "lng": -75.0484, "population": 34214, "early_death": 5.17, "homicide": 0.47, "overdose": 1.14, "shooting": 0.67, "hospital": 2.05, "foster": 4.09, "schools": 3, "early_death_raw": 177, "homicide_raw": 16, "overdose_raw": 39, "shooting_raw": 23, "hospital_raw": 70, "foster_raw": 140, "cli": 44.6}, {"year": 2022, "zip": "19136", "name": "Pennypack", "lat": 40.0494, "lng": -75.0234, "population": 36435, "early_death": 3.92, "homicide": 0.0, "overdose": 1.07, "shooting": 0.58, "hospital": 2.28, "foster": 2.36, "schools": 5, "early_death_raw": 143, "homicide_raw": 0, "overdose_raw": 39, "shooting_raw": 21, "hospital_raw": 83, "foster_raw": 86, "cli": 37.7}, {"year": 2022, "zip": "19137", "name": "Bridesburg", "lat": 39.9993, "lng": -75.0724, "population": 8100, "early_death": 3.7, "homicide": 0.0, "overdose": 0.0, "shooting": 0.37, "hospital": 3.33, "foster": 4.44, "schools": 4, "early_death_raw": 30, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 3, "hospital_raw": 27, "foster_raw": 36, "cli": 30.7}, {"year": 2022, "zip": "19138", "name": "West Oak Lane", "lat": 40.0554, "lng": -75.1593, "population": 32471, "early_death": 4.68, "homicide": 0.86, "overdose": 1.05, "shooting": 1.17, "hospital": 3.14, "foster": 6.81, "schools": 7, "early_death_raw": 152, "homicide_raw": 28, "overdose_raw": 34, "shooting_raw": 38, "hospital_raw": 102, "foster_raw": 221, "cli": 53.8}, {"year": 2022, "zip": "19139", "name": "West Philadelphia", "lat": 39.9612, "lng": -75.2289, "population": 46041, "early_death": 5.08, "homicide": 0.78, "overdose": 1.19, "shooting": 1.82, "hospital": 4.02, "foster": 6.6, "schools": 15, "early_death_raw": 234, "homicide_raw": 36, "overdose_raw": 55, "shooting_raw": 84, "hospital_raw": 185, "foster_raw": 304, "cli": 62.8}, {"year": 2022, "zip": "19140", "name": "North Philadelphia", "lat": 40.0124, "lng": -75.1452, "population": 53996, "early_death": 4.87, "homicide": 0.63, "overdose": 1.39, "shooting": 2.94, "hospital": 4.15, "foster": 8.65, "schools": 21, "early_death_raw": 263, "homicide_raw": 34, "overdose_raw": 75, "shooting_raw": 159, "hospital_raw": 224, "foster_raw": 467, "cli": 75.4}, {"year": 2022, "zip": "19141", "name": "Logan", "lat": 40.0374, "lng": -75.1452, "population": 34239, "early_death": 4.09, "homicide": 0.38, "overdose": 1.02, "shooting": 1.58, "hospital": 3.13, "foster": 6.72, "schools": 13, "early_death_raw": 140, "homicide_raw": 13, "overdose_raw": 35, "shooting_raw": 54, "hospital_raw": 107, "foster_raw": 230, "cli": 54.1}, {"year": 2022, "zip": "19142", "name": "Southwest", "lat": 39.9232, "lng": -75.2319, "population": 31018, "early_death": 3.55, "homicide": 0.48, "overdose": 0.71, "shooting": 1.19, "hospital": 2.84, "foster": 5.96, "schools": 8, "early_death_raw": 110, "homicide_raw": 15, "overdose_raw": 22, "shooting_raw": 37, "hospital_raw": 88, "foster_raw": 185, "cli": 44.5}, {"year": 2022, "zip": "19143", "name": "Southwest Philly", "lat": 39.9422, "lng": -75.2269, "population": 63186, "early_death": 4.04, "homicide": 0.49, "overdose": 0.7, "shooting": 1.42, "hospital": 3.85, "foster": 5.05, "schools": 16, "early_death_raw": 255, "homicide_raw": 31, "overdose_raw": 44, "shooting_raw": 90, "hospital_raw": 243, "foster_raw": 319, "cli": 48.7}, {"year": 2022, "zip": "19144", "name": "Germantown", "lat": 40.0344, "lng": -75.1753, "population": 47454, "early_death": 3.77, "homicide": 0.57, "overdose": 0.74, "shooting": 1.05, "hospital": 3.08, "foster": 6.72, "schools": 8, "early_death_raw": 179, "homicide_raw": 27, "overdose_raw": 35, "shooting_raw": 50, "hospital_raw": 146, "foster_raw": 319, "cli": 46.7}, {"year": 2022, "zip": "19145", "name": "South Philly West", "lat": 39.9182, "lng": -75.1862, "population": 44107, "early_death": 3.65, "homicide": 0.29, "overdose": 0.63, "shooting": 0.63, "hospital": 2.9, "foster": 2.81, "schools": 9, "early_death_raw": 161, "homicide_raw": 13, "overdose_raw": 28, "shooting_raw": 28, "hospital_raw": 128, "foster_raw": 124, "cli": 35.0}, {"year": 2022, "zip": "19146", "name": "South Philadelphia", "lat": 39.9372, "lng": -75.1772, "population": 40303, "early_death": 3.05, "homicide": 0.0, "overdose": 0.6, "shooting": 0.45, "hospital": 2.75, "foster": 2.7, "schools": 7, "early_death_raw": 123, "homicide_raw": 0, "overdose_raw": 24, "shooting_raw": 18, "hospital_raw": 111, "foster_raw": 109, "cli": 31.3}, {"year": 2022, "zip": "19147", "name": "Queen Village", "lat": 39.9372, "lng": -75.1542, "population": 39100, "early_death": 1.71, "homicide": 0.0, "overdose": 0.33, "shooting": 0.72, "hospital": 1.51, "foster": 0.95, "schools": 10, "early_death_raw": 67, "homicide_raw": 0, "overdose_raw": 13, "shooting_raw": 28, "hospital_raw": 59, "foster_raw": 37, "cli": 19.2}, {"year": 2022, "zip": "19148", "name": "South Philly East", "lat": 39.9142, "lng": -75.1522, "population": 50324, "early_death": 3.26, "homicide": 0.26, "overdose": 0.7, "shooting": 0.5, "hospital": 2.38, "foster": 1.45, "schools": 11, "early_death_raw": 164, "homicide_raw": 13, "overdose_raw": 35, "shooting_raw": 25, "hospital_raw": 120, "foster_raw": 73, "cli": 29.9}, {"year": 2022, "zip": "19149", "name": "Mayfair", "lat": 40.0394, "lng": -75.0664, "population": 58741, "early_death": 3.22, "homicide": 0.2, "overdose": 0.65, "shooting": 0.27, "hospital": 1.48, "foster": 2.43, "schools": 5, "early_death_raw": 189, "homicide_raw": 12, "overdose_raw": 38, "shooting_raw": 16, "hospital_raw": 87, "foster_raw": 143, "cli": 26.7}, {"year": 2022, "zip": "19150", "name": "Cedarbrook", "lat": 40.0724, "lng": -75.1593, "population": 22932, "early_death": 2.83, "homicide": 0.0, "overdose": 0.0, "shooting": 0.44, "hospital": 2.49, "foster": 2.4, "schools": 4, "early_death_raw": 65, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 10, "hospital_raw": 57, "foster_raw": 55, "cli": 22.4}, {"year": 2022, "zip": "19151", "name": "Overbrook Park", "lat": 39.9782, "lng": -75.2569, "population": 33553, "early_death": 2.98, "homicide": 0.45, "overdose": 0.42, "shooting": 1.01, "hospital": 2.56, "foster": 4.23, "schools": 8, "early_death_raw": 100, "homicide_raw": 15, "overdose_raw": 14, "shooting_raw": 34, "hospital_raw": 86, "foster_raw": 142, "cli": 34.6}, {"year": 2022, "zip": "19152", "name": "Northeast", "lat": 40.0624, "lng": -75.0464, "population": 35211, "early_death": 2.84, "homicide": 0.0, "overdose": 0.43, "shooting": 0.23, "hospital": 1.87, "foster": 0.85, "schools": 5, "early_death_raw": 100, "homicide_raw": 0, "overdose_raw": 15, "shooting_raw": 8, "hospital_raw": 66, "foster_raw": 30, "cli": 21.3}, {"year": 2022, "zip": "19153", "name": "Eastwick", "lat": 39.8952, "lng": -75.2389, "population": 12223, "early_death": 3.11, "homicide": 0.0, "overdose": 0.0, "shooting": 0.65, "hospital": 2.05, "foster": 2.86, "schools": 2, "early_death_raw": 38, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 8, "hospital_raw": 25, "foster_raw": 35, "cli": 23.8}, {"year": 2022, "zip": "19154", "name": "Far Northeast", "lat": 40.0924, "lng": -74.9864, "population": 34823, "early_death": 2.84, "homicide": 0.0, "overdose": 0.46, "shooting": 0.0, "hospital": 1.98, "foster": 0.57, "schools": 5, "early_death_raw": 99, "homicide_raw": 0, "overdose_raw": 16, "shooting_raw": 0, "hospital_raw": 69, "foster_raw": 20, "cli": 20.1}, {"year": 2023, "zip": "19102", "name": "Center City East", "lat": 39.9526, "lng": -75.1652, "population": 5946, "early_death": 0.0, "homicide": 0.0, "overdose": 0.0, "shooting": 0.67, "hospital": 2.86, "foster": 6.39, "schools": 2, "early_death_raw": 0, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 4, "hospital_raw": 17, "foster_raw": 38, "cli": 27.2}, {"year": 2023, "zip": "19103", "name": "Center City West", "lat": 39.9536, "lng": -75.1743, "population": 25602, "early_death": 0.62, "homicide": 0.0, "overdose": 0.0, "shooting": 0.04, "hospital": 1.17, "foster": 0.0, "schools": 4, "early_death_raw": 16, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 1, "hospital_raw": 30, "foster_raw": 0, "cli": 5.3}, {"year": 2023, "zip": "19104", "name": "University City", "lat": 39.9587, "lng": -75.2015, "population": 54454, "early_death": 1.67, "homicide": 0.22, "overdose": 0.39, "shooting": 0.61, "hospital": 2.72, "foster": 4.44, "schools": 15, "early_death_raw": 91, "homicide_raw": 12, "overdose_raw": 21, "shooting_raw": 33, "hospital_raw": 148, "foster_raw": 242, "cli": 30.5}, {"year": 2023, "zip": "19106", "name": "Old City", "lat": 39.947, "lng": -75.1445, "population": 14421, "early_death": 0.76, "homicide": 0.0, "overdose": 0.0, "shooting": 0.28, "hospital": 0.69, "foster": 0.0, "schools": 5, "early_death_raw": 11, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 4, "hospital_raw": 10, "foster_raw": 0, "cli": 6.4}, {"year": 2023, "zip": "19107", "name": "Chinatown", "lat": 39.9519, "lng": -75.1577, "population": 15478, "early_death": 2.39, "homicide": 0.0, "overdose": 0.9, "shooting": 0.26, "hospital": 5.43, "foster": 3.17, "schools": 1, "early_death_raw": 37, "homicide_raw": 0, "overdose_raw": 14, "shooting_raw": 4, "hospital_raw": 84, "foster_raw": 49, "cli": 39.2}, {"year": 2023, "zip": "19111", "name": "Fox Chase", "lat": 40.0654, "lng": -75.0774, "population": 65821, "early_death": 2.67, "homicide": 0.21, "overdose": 0.53, "shooting": 0.27, "hospital": 1.85, "foster": 1.14, "schools": 9, "early_death_raw": 176, "homicide_raw": 14, "overdose_raw": 35, "shooting_raw": 18, "hospital_raw": 122, "foster_raw": 75, "cli": 22.3}, {"year": 2023, "zip": "19114", "name": "Torresdale", "lat": 40.065, "lng": -75.025, "population": 31071, "early_death": 3.12, "homicide": 0.0, "overdose": 0.55, "shooting": 0.03, "hospital": 1.71, "foster": 1.13, "schools": 3, "early_death_raw": 97, "homicide_raw": 0, "overdose_raw": 17, "shooting_raw": 1, "hospital_raw": 53, "foster_raw": 35, "cli": 21.3}, {"year": 2023, "zip": "19115", "name": "Bustleton", "lat": 40.0896, "lng": -75.0446, "population": 34737, "early_death": 2.02, "homicide": 0.0, "overdose": 0.0, "shooting": 0.06, "hospital": 1.78, "foster": 0.6, "schools": 3, "early_death_raw": 70, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 2, "hospital_raw": 62, "foster_raw": 21, "cli": 12.3}, {"year": 2023, "zip": "19116", "name": "Somerton", "lat": 40.1156, "lng": -75.0156, "population": 33421, "early_death": 2.45, "homicide": 0.0, "overdose": 0.33, "shooting": 0.09, "hospital": 1.65, "foster": 0.48, "schools": 6, "early_death_raw": 82, "homicide_raw": 0, "overdose_raw": 11, "shooting_raw": 3, "hospital_raw": 55, "foster_raw": 16, "cli": 16.3}, {"year": 2023, "zip": "19118", "name": "Chestnut Hill", "lat": 40.0724, "lng": -75.2089, "population": 10231, "early_death": 1.27, "homicide": 0.0, "overdose": 0.0, "shooting": 0.0, "hospital": 0.0, "foster": 0.0, "schools": 1, "early_death_raw": 13, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 0, "hospital_raw": 0, "foster_raw": 0, "cli": 3.5}, {"year": 2023, "zip": "19119", "name": "Mt Airy", "lat": 40.0553, "lng": -75.1893, "population": 28566, "early_death": 1.75, "homicide": 0.0, "overdose": 0.42, "shooting": 0.18, "hospital": 1.54, "foster": 1.58, "schools": 6, "early_death_raw": 50, "homicide_raw": 0, "overdose_raw": 12, "shooting_raw": 5, "hospital_raw": 44, "foster_raw": 45, "cli": 18.0}, {"year": 2023, "zip": "19120", "name": "Olney", "lat": 40.034, "lng": -75.119, "population": 68078, "early_death": 3.16, "homicide": 0.32, "overdose": 0.6, "shooting": 1.04, "hospital": 2.01, "foster": 3.13, "schools": 13, "early_death_raw": 215, "homicide_raw": 22, "overdose_raw": 41, "shooting_raw": 71, "hospital_raw": 137, "foster_raw": 213, "cli": 35.6}, {"year": 2023, "zip": "19121", "name": "North Central", "lat": 39.9812, "lng": -75.1722, "population": 40324, "early_death": 3.72, "homicide": 0.47, "overdose": 0.84, "shooting": 1.93, "hospital": 2.9, "foster": 7.02, "schools": 13, "early_death_raw": 150, "homicide_raw": 19, "overdose_raw": 34, "shooting_raw": 78, "hospital_raw": 117, "foster_raw": 283, "cli": 57.8}, {"year": 2023, "zip": "19122", "name": "Norris Square", "lat": 39.9812, "lng": -75.1422, "population": 24740, "early_death": 2.34, "homicide": 0.0, "overdose": 0.65, "shooting": 0.77, "hospital": 4.73, "foster": 2.59, "schools": 11, "early_death_raw": 58, "homicide_raw": 0, "overdose_raw": 16, "shooting_raw": 19, "hospital_raw": 117, "foster_raw": 64, "cli": 37.9}, {"year": 2023, "zip": "19123", "name": "Northern Liberties", "lat": 39.9643, "lng": -75.1492, "population": 19327, "early_death": 2.38, "homicide": 0.0, "overdose": 0.0, "shooting": 1.03, "hospital": 2.64, "foster": 3.21, "schools": 7, "early_death_raw": 46, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 20, "hospital_raw": 51, "foster_raw": 62, "cli": 29.6}, {"year": 2023, "zip": "19124", "name": "Frankford", "lat": 40.0234, "lng": -75.0934, "population": 70763, "early_death": 3.9, "homicide": 0.4, "overdose": 0.86, "shooting": 1.13, "hospital": 2.87, "foster": 3.93, "schools": 15, "early_death_raw": 276, "homicide_raw": 28, "overdose_raw": 61, "shooting_raw": 80, "hospital_raw": 203, "foster_raw": 278, "cli": 45.0}, {"year": 2023, "zip": "19125", "name": "Fishtown", "lat": 39.9753, "lng": -75.1282, "population": 25331, "early_death": 2.37, "homicide": 0.0, "overdose": 0.59, "shooting": 0.32, "hospital": 3.63, "foster": 1.42, "schools": 8, "early_death_raw": 60, "homicide_raw": 0, "overdose_raw": 15, "shooting_raw": 8, "hospital_raw": 92, "foster_raw": 36, "cli": 28.0}, {"year": 2023, "zip": "19126", "name": "Oak Lane", "lat": 40.0553, "lng": -75.1383, "population": 17520, "early_death": 3.48, "homicide": 0.0, "overdose": 0.0, "shooting": 0.68, "hospital": 3.25, "foster": 3.88, "schools": 2, "early_death_raw": 61, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 12, "hospital_raw": 57, "foster_raw": 68, "cli": 32.7}, {"year": 2023, "zip": "19127", "name": "Manayunk", "lat": 40.0274, "lng": -75.2249, "population": 5797, "early_death": 0.0, "homicide": 0.0, "overdose": 0.0, "shooting": 0.52, "hospital": 2.07, "foster": 2.24, "schools": 1, "early_death_raw": 0, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 3, "hospital_raw": 12, "foster_raw": 13, "cli": 14.9}, {"year": 2023, "zip": "19128", "name": "Roxborough", "lat": 40.0514, "lng": -75.2279, "population": 37018, "early_death": 1.51, "homicide": 0.0, "overdose": 0.35, "shooting": 0.03, "hospital": 1.62, "foster": 1.78, "schools": 6, "early_death_raw": 56, "homicide_raw": 0, "overdose_raw": 13, "shooting_raw": 1, "hospital_raw": 60, "foster_raw": 66, "cli": 16.0}, {"year": 2023, "zip": "19129", "name": "East Falls", "lat": 40.0144, "lng": -75.1893, "population": 11812, "early_death": 2.03, "homicide": 0.0, "overdose": 0.0, "shooting": 1.1, "hospital": 2.62, "foster": 2.88, "schools": 5, "early_death_raw": 24, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 13, "hospital_raw": 31, "foster_raw": 34, "cli": 28.4}, {"year": 2023, "zip": "19130", "name": "Fairmount", "lat": 39.9682, "lng": -75.1762, "population": 30424, "early_death": 1.15, "homicide": 0.0, "overdose": 0.53, "shooting": 0.23, "hospital": 0.89, "foster": 1.61, "schools": 8, "early_death_raw": 35, "homicide_raw": 0, "overdose_raw": 16, "shooting_raw": 7, "hospital_raw": 27, "foster_raw": 49, "cli": 16.1}, {"year": 2023, "zip": "19131", "name": "Overbrook", "lat": 39.9902, "lng": -75.2249, "population": 44799, "early_death": 3.71, "homicide": 0.49, "overdose": 0.47, "shooting": 1.27, "hospital": 3.35, "foster": 4.71, "schools": 16, "early_death_raw": 166, "homicide_raw": 22, "overdose_raw": 21, "shooting_raw": 57, "hospital_raw": 150, "foster_raw": 211, "cli": 44.9}, {"year": 2023, "zip": "19132", "name": "Strawberry Mansion", "lat": 40.0014, "lng": -75.1722, "population": 31627, "early_death": 7.18, "homicide": 0.85, "overdose": 1.64, "shooting": 2.91, "hospital": 4.96, "foster": 9.45, "schools": 7, "early_death_raw": 227, "homicide_raw": 27, "overdose_raw": 52, "shooting_raw": 92, "hospital_raw": 157, "foster_raw": 299, "cli": 94.3}, {"year": 2023, "zip": "19133", "name": "Hunting Park", "lat": 39.9972, "lng": -75.1342, "population": 25694, "early_death": 5.72, "homicide": 0.54, "overdose": 2.06, "shooting": 2.61, "hospital": 3.15, "foster": 6.15, "schools": 9, "early_death_raw": 147, "homicide_raw": 14, "overdose_raw": 53, "shooting_raw": 67, "hospital_raw": 81, "foster_raw": 158, "cli": 79.7}, {"year": 2023, "zip": "19134", "name": "Kensington", "lat": 39.9953, "lng": -75.1052, "population": 56750, "early_death": 5.59, "homicide": 0.33, "overdose": 2.1, "shooting": 2.38, "hospital": 3.72, "foster": 5.66, "schools": 13, "early_death_raw": 317, "homicide_raw": 19, "overdose_raw": 119, "shooting_raw": 135, "hospital_raw": 211, "foster_raw": 321, "cli": 78.3}, {"year": 2023, "zip": "19135", "name": "Holmesburg", "lat": 40.0254, "lng": -75.0484, "population": 34234, "early_death": 3.18, "homicide": 0.29, "overdose": 0.7, "shooting": 0.53, "hospital": 2.19, "foster": 3.56, "schools": 3, "early_death_raw": 109, "homicide_raw": 10, "overdose_raw": 24, "shooting_raw": 18, "hospital_raw": 75, "foster_raw": 122, "cli": 33.7}, {"year": 2023, "zip": "19136", "name": "Pennypack", "lat": 40.0494, "lng": -75.0234, "population": 35898, "early_death": 3.4, "homicide": 0.0, "overdose": 0.86, "shooting": 0.39, "hospital": 2.48, "foster": 1.89, "schools": 5, "early_death_raw": 122, "homicide_raw": 0, "overdose_raw": 31, "shooting_raw": 14, "hospital_raw": 89, "foster_raw": 68, "cli": 31.9}, {"year": 2023, "zip": "19137", "name": "Bridesburg", "lat": 39.9993, "lng": -75.0724, "population": 7933, "early_death": 3.4, "homicide": 0.0, "overdose": 0.0, "shooting": 0.38, "hospital": 2.77, "foster": 3.03, "schools": 4, "early_death_raw": 27, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 3, "hospital_raw": 22, "foster_raw": 24, "cli": 26.8}, {"year": 2023, "zip": "19138", "name": "West Oak Lane", "lat": 40.0554, "lng": -75.1593, "population": 31737, "early_death": 3.75, "homicide": 0.41, "overdose": 0.63, "shooting": 0.82, "hospital": 2.77, "foster": 5.96, "schools": 8, "early_death_raw": 119, "homicide_raw": 13, "overdose_raw": 20, "shooting_raw": 26, "hospital_raw": 88, "foster_raw": 189, "cli": 43.8}, {"year": 2023, "zip": "19139", "name": "West Philadelphia", "lat": 39.9612, "lng": -75.2289, "population": 44619, "early_death": 4.17, "homicide": 0.54, "overdose": 1.01, "shooting": 1.84, "hospital": 3.97, "foster": 5.4, "schools": 15, "early_death_raw": 186, "homicide_raw": 24, "overdose_raw": 45, "shooting_raw": 82, "hospital_raw": 177, "foster_raw": 241, "cli": 59.4}, {"year": 2023, "zip": "19140", "name": "North Philadelphia", "lat": 40.0124, "lng": -75.1452, "population": 54196, "early_death": 4.67, "homicide": 0.52, "overdose": 1.16, "shooting": 1.79, "hospital": 3.93, "foster": 7.51, "schools": 22, "early_death_raw": 253, "homicide_raw": 28, "overdose_raw": 63, "shooting_raw": 97, "hospital_raw": 213, "foster_raw": 407, "cli": 66.2}, {"year": 2023, "zip": "19141", "name": "Logan", "lat": 40.0374, "lng": -75.1452, "population": 33832, "early_death": 3.58, "homicide": 0.33, "overdose": 0.83, "shooting": 1.24, "hospital": 2.6, "foster": 5.82, "schools": 13, "early_death_raw": 121, "homicide_raw": 11, "overdose_raw": 28, "shooting_raw": 42, "hospital_raw": 88, "foster_raw": 197, "cli": 48.0}, {"year": 2023, "zip": "19142", "name": "Southwest", "lat": 39.9232, "lng": -75.2319, "population": 30312, "early_death": 3.37, "homicide": 0.36, "overdose": 0.73, "shooting": 0.76, "hospital": 3.0, "foster": 4.22, "schools": 8, "early_death_raw": 102, "homicide_raw": 11, "overdose_raw": 22, "shooting_raw": 23, "hospital_raw": 91, "foster_raw": 128, "cli": 40.1}, {"year": 2023, "zip": "19143", "name": "Southwest Philly", "lat": 39.9422, "lng": -75.2269, "population": 62503, "early_death": 3.54, "homicide": 0.43, "overdose": 0.56, "shooting": 1.01, "hospital": 3.44, "foster": 3.98, "schools": 17, "early_death_raw": 221, "homicide_raw": 27, "overdose_raw": 35, "shooting_raw": 63, "hospital_raw": 215, "foster_raw": 249, "cli": 41.8}, {"year": 2023, "zip": "19144", "name": "Germantown", "lat": 40.0344, "lng": -75.1753, "population": 48542, "early_death": 3.67, "homicide": 0.31, "overdose": 0.87, "shooting": 0.66, "hospital": 2.97, "foster": 5.6, "schools": 9, "early_death_raw": 178, "homicide_raw": 15, "overdose_raw": 42, "shooting_raw": 32, "hospital_raw": 144, "foster_raw": 272, "cli": 44.2}, {"year": 2023, "zip": "19145", "name": "South Philly West", "lat": 39.9182, "lng": -75.1862, "population": 42955, "early_death": 2.89, "homicide": 0.0, "overdose": 0.88, "shooting": 0.72, "hospital": 3.21, "foster": 1.84, "schools": 9, "early_death_raw": 124, "homicide_raw": 0, "overdose_raw": 38, "shooting_raw": 31, "hospital_raw": 138, "foster_raw": 79, "cli": 35.4}, {"year": 2023, "zip": "19146", "name": "South Philadelphia", "lat": 39.9372, "lng": -75.1772, "population": 40845, "early_death": 2.28, "homicide": 0.24, "overdose": 0.64, "shooting": 0.37, "hospital": 2.23, "foster": 1.69, "schools": 8, "early_death_raw": 93, "homicide_raw": 10, "overdose_raw": 26, "shooting_raw": 15, "hospital_raw": 91, "foster_raw": 69, "cli": 25.4}, {"year": 2023, "zip": "19147", "name": "Queen Village", "lat": 39.9372, "lng": -75.1542, "population": 38747, "early_death": 1.39, "homicide": 0.0, "overdose": 0.41, "shooting": 0.34, "hospital": 1.47, "foster": 0.8, "schools": 10, "early_death_raw": 54, "homicide_raw": 0, "overdose_raw": 16, "shooting_raw": 13, "hospital_raw": 57, "foster_raw": 31, "cli": 16.5}, {"year": 2023, "zip": "19148", "name": "South Philly East", "lat": 39.9142, "lng": -75.1522, "population": 50777, "early_death": 3.15, "homicide": 0.0, "overdose": 0.83, "shooting": 0.51, "hospital": 2.38, "foster": 0.95, "schools": 11, "early_death_raw": 160, "homicide_raw": 0, "overdose_raw": 42, "shooting_raw": 26, "hospital_raw": 121, "foster_raw": 48, "cli": 29.6}, {"year": 2023, "zip": "19149", "name": "Mayfair", "lat": 40.0394, "lng": -75.0664, "population": 57226, "early_death": 2.22, "homicide": 0.0, "overdose": 0.37, "shooting": 0.28, "hospital": 1.7, "foster": 2.25, "schools": 5, "early_death_raw": 127, "homicide_raw": 0, "overdose_raw": 21, "shooting_raw": 16, "hospital_raw": 97, "foster_raw": 129, "cli": 21.6}, {"year": 2023, "zip": "19150", "name": "Cedarbrook", "lat": 40.0724, "lng": -75.1593, "population": 23582, "early_death": 3.1, "homicide": 0.0, "overdose": 0.68, "shooting": 0.21, "hospital": 2.71, "foster": 1.95, "schools": 4, "early_death_raw": 73, "homicide_raw": 0, "overdose_raw": 16, "shooting_raw": 5, "hospital_raw": 64, "foster_raw": 46, "cli": 28.5}, {"year": 2023, "zip": "19151", "name": "Overbrook Park", "lat": 39.9782, "lng": -75.2569, "population": 32938, "early_death": 2.98, "homicide": 0.0, "overdose": 0.46, "shooting": 0.39, "hospital": 2.16, "foster": 3.61, "schools": 8, "early_death_raw": 98, "homicide_raw": 0, "overdose_raw": 15, "shooting_raw": 13, "hospital_raw": 71, "foster_raw": 119, "cli": 29.6}, {"year": 2023, "zip": "19152", "name": "Northeast", "lat": 40.0624, "lng": -75.0464, "population": 35566, "early_death": 1.97, "homicide": 0.0, "overdose": 0.45, "shooting": 0.28, "hospital": 2.0, "foster": 0.53, "schools": 5, "early_death_raw": 70, "homicide_raw": 0, "overdose_raw": 16, "shooting_raw": 10, "hospital_raw": 71, "foster_raw": 19, "cli": 18.8}, {"year": 2023, "zip": "19153", "name": "Eastwick", "lat": 39.8952, "lng": -75.2389, "population": 12396, "early_death": 2.42, "homicide": 0.0, "overdose": 0.0, "shooting": 1.05, "hospital": 3.31, "foster": 3.23, "schools": 2, "early_death_raw": 30, "homicide_raw": 0, "overdose_raw": 0, "shooting_raw": 13, "hospital_raw": 41, "foster_raw": 40, "cli": 31.7}, {"year": 2023, "zip": "19154", "name": "Far Northeast", "lat": 40.0924, "lng": -74.9864, "population": 34084, "early_death": 2.52, "homicide": 0.0, "overdose": 0.29, "shooting": 0.12, "hospital": 1.61, "foster": 0.7, "schools": 5, "early_death_raw": 86, "homicide_raw": 0, "overdose_raw": 10, "shooting_raw": 4, "hospital_raw": 55, "foster_raw": 24, "cli": 16.7}];
+const cityTrends = [{"year": 2015, "early_deaths": 4587, "homicides": 171, "overdoses": 446, "shootings": 1031, "hospitalizations": 3436, "foster_care": 11714, "school_closures": 0}, {"year": 2016, "early_deaths": 4850, "homicides": 192, "overdoses": 606, "shootings": 1056, "hospitalizations": 3342, "foster_care": 11798, "school_closures": 0}, {"year": 2017, "early_deaths": 4976, "homicides": 198, "overdoses": 923, "shootings": 989, "hospitalizations": 3300, "foster_care": 12308, "school_closures": 17}, {"year": 2018, "early_deaths": 4964, "homicides": 290, "overdoses": 855, "shootings": 1135, "hospitalizations": 3568, "foster_care": 10271, "school_closures": 18}, {"year": 2019, "early_deaths": 4976, "homicides": 257, "overdoses": 881, "shootings": 1152, "hospitalizations": 3332, "foster_care": 8917, "school_closures": 18}, {"year": 2020, "early_deaths": 6031, "homicides": 423, "overdoses": 1018, "shootings": 1794, "hospitalizations": 3599, "foster_care": 6920, "school_closures": 20}, {"year": 2021, "early_deaths": 5910, "homicides": 465, "overdoses": 1062, "shootings": 1825, "hospitalizations": 4048, "foster_care": 6664, "school_closures": 21}, {"year": 2022, "early_deaths": 5553, "homicides": 446, "overdoses": 1131, "shootings": 1778, "hospitalizations": 4368, "foster_care": 6245, "school_closures": 21}, {"year": 2023, "early_deaths": 4834, "homicides": 326, "overdoses": 1061, "shootings": 1284, "hospitalizations": 4136, "foster_care": 5177, "school_closures": 22}];
+
+// Simplified Philadelphia ZIP regions for mini map (approximate polygons)
+const zipRegions = {
+    "19154": "M160,5 L185,5 L190,25 L175,35 L155,30 Z",
+    "19116": "M140,8 L160,5 L155,30 L145,35 L130,25 Z",
+    "19115": "M120,12 L140,8 L130,25 L145,35 L125,40 L110,30 Z",
+    "19114": "M155,30 L175,35 L180,55 L160,60 L145,50 Z",
+    "19152": "M145,35 L155,30 L160,60 L145,50 L130,45 Z",
+    "19111": "M110,30 L125,40 L130,45 L120,60 L100,55 L95,40 Z",
+    "19136": "M130,45 L145,50 L160,60 L155,75 L135,70 L125,55 Z",
+    "19149": "M120,60 L130,45 L135,70 L125,80 L110,75 Z",
+    "19135": "M135,70 L155,75 L160,90 L145,95 L130,85 Z",
+    "19150": "M80,45 L95,40 L100,55 L95,70 L75,65 Z",
+    "19126": "M95,55 L100,55 L110,75 L100,85 L85,80 L80,65 Z",
+    "19141": "M75,65 L95,70 L100,85 L90,95 L70,90 L65,75 Z",
+    "19120": "M100,70 L110,75 L125,80 L120,95 L105,100 L90,95 Z",
+    "19124": "M120,80 L130,85 L145,95 L140,110 L120,105 L115,95 Z",
+    "19137": "M145,95 L160,90 L165,105 L150,110 L140,105 Z",
+    "19128": "M15,50 L35,45 L45,60 L40,80 L20,85 L10,70 Z",
+    "19118": "M35,45 L55,40 L65,55 L55,70 L40,65 L35,55 Z",
+    "19119": "M55,55 L65,55 L75,65 L70,80 L55,85 L50,70 Z",
+    "19138": "M65,65 L80,65 L85,80 L75,95 L60,90 L55,75 Z",
+    "19144": "M55,80 L70,80 L75,95 L70,105 L55,110 L45,95 Z",
+    "19140": "M75,90 L90,95 L95,110 L85,120 L70,115 L65,100 Z",
+    "19134": "M105,95 L120,100 L125,115 L115,125 L100,120 L95,105 Z",
+    "19133": "M90,100 L105,95 L100,115 L90,120 L80,110 Z",
+    "19132": "M70,100 L85,105 L90,120 L80,130 L65,125 L60,110 Z",
+    "19127": "M20,80 L40,80 L45,95 L35,105 L15,100 Z",
+    "19129": "M40,85 L55,85 L55,100 L45,110 L35,100 Z",
+    "19121": "M55,100 L70,100 L75,115 L65,125 L55,120 L50,105 Z",
+    "19122": "M80,110 L95,105 L100,120 L90,130 L75,125 Z",
+    "19125": "M100,115 L115,120 L120,135 L105,140 L95,130 Z",
+    "19131": "M30,100 L45,95 L55,110 L50,125 L35,130 L25,115 Z",
+    "19151": "M15,105 L30,100 L35,120 L25,135 L10,130 Z",
+    "19139": "M35,120 L50,115 L60,130 L55,145 L40,150 L30,135 Z",
+    "19104": "M50,120 L65,115 L75,130 L70,145 L55,145 Z",
+    "19130": "M65,115 L80,115 L85,130 L75,140 L65,135 Z",
+    "19123": "M80,120 L95,125 L100,140 L85,145 L75,135 Z",
+    "19106": "M95,130 L105,135 L110,150 L95,155 L85,145 Z",
+    "19107": "M80,130 L95,130 L95,145 L80,150 L75,140 Z",
+    "19103": "M65,135 L80,130 L80,150 L70,155 L60,145 Z",
+    "19102": "M80,145 L95,145 L95,155 L80,160 L75,150 Z",
+    "19146": "M60,145 L75,145 L80,160 L70,165 L55,160 Z",
+    "19143": "M40,145 L55,145 L65,160 L60,175 L40,175 L30,160 Z",
+    "19142": "M20,150 L35,145 L45,160 L40,175 L25,180 L15,165 Z",
+    "19153": "M5,165 L20,160 L30,175 L25,190 L10,190 Z",
+    "19145": "M55,160 L70,160 L75,175 L65,185 L50,180 Z",
+    "19148": "M70,165 L85,165 L95,180 L85,190 L70,185 Z",
+    "19147": "M80,155 L95,155 L100,170 L90,180 L75,175 Z"
+};
+
+// ===========================================
+// STATE
+// ===========================================
+let currentYear = 2023;
+let currentIndicator = 'cli';
+let selectedZip = '19132';
+let isPlaying = false;
+let playInterval = null;
+let trendsChart = null;
+let currentTrendView = 'citywide';
+
+// ===========================================
+// HELPERS
+// ===========================================
+function getDataForYear(year) {
+    return fullData.filter(d => d.year === year);
+}
+
+function getZipData(zip, year) {
+    return fullData.find(d => d.zip === zip && d.year === year);
+}
+
+function getZipHistory(zip) {
+    return fullData.filter(d => d.zip === zip).sort((a, b) => a.year - b.year);
+}
+
+function latLngToSvg(lat, lng) {
+    const minLat = 39.87, maxLat = 40.14;
+    const minLng = -75.30, maxLng = -74.94;
+    const x = ((lng - minLng) / (maxLng - minLng)) * 440 + 30;
+    const y = ((maxLat - lat) / (maxLat - minLat)) * 370 + 25;
+    return { x, y };
+}
+
+function getValue(data, indicator) {
+    if (indicator === 'cli') return data.cli;
+    if (indicator === 'schools') return data.schools;
+    return data[indicator] || 0;
+}
+
+function getColor(value, indicator) {
+    let maxVal = indicator === 'cli' ? 100 : (indicator === 'schools' ? 25 : 12);
+    const intensity = Math.min(value / maxVal, 1);
+    const alpha = 0.15 + (intensity * 0.85);
+    return `rgba(224, 122, 95, ${alpha})`;
+}
+
+function getRadius(population) {
+    const minPop = 5000, maxPop = 75000;
+    const minR = 6, maxR = 26;
+    const normalized = Math.min(Math.max((population - minPop) / (maxPop - minPop), 0), 1);
+    return minR + (normalized * (maxR - minR));
+}
+
+// ===========================================
+// BUBBLE MAP
+// ===========================================
+function renderMap() {
+    const svg = document.getElementById('mapSvg');
+    svg.innerHTML = '';
+    
+    const yearData = getDataForYear(currentYear);
+    const sorted = [...yearData].sort((a, b) => getValue(a, currentIndicator) - getValue(b, currentIndicator));
+    
+    sorted.forEach(data => {
+        const pos = latLngToSvg(data.lat, data.lng);
+        const value = getValue(data, currentIndicator);
+        const radius = getRadius(data.population);
+        const color = getColor(value, currentIndicator);
+        
+        const circle = document.createElementNS('http://www.w3.org/2000/svg', 'circle');
+        circle.setAttribute('cx', pos.x);
+        circle.setAttribute('cy', pos.y);
+        circle.setAttribute('r', radius);
+        circle.setAttribute('fill', color);
+        circle.setAttribute('stroke', data.zip === selectedZip ? 'white' : 'rgba(255,255,255,0.2)');
+        circle.setAttribute('stroke-width', data.zip === selectedZip ? '2.5' : '0.5');
+        circle.setAttribute('class', 'zip-bubble');
+        circle.setAttribute('data-zip', data.zip);
+        
+        circle.addEventListener('click', () => selectZip(data.zip));
+        circle.addEventListener('mouseenter', () => updatePanel(data));
+        
+        svg.appendChild(circle);
+        
+        if (value > 50 || data.population > 55000) {
+            const text = document.createElementNS('http://www.w3.org/2000/svg', 'text');
+            text.setAttribute('x', pos.x);
+            text.setAttribute('y', pos.y + 3);
+            text.setAttribute('text-anchor', 'middle');
+            text.setAttribute('class', 'zip-label');
+            text.textContent = data.name.split(' ')[0];
+            svg.appendChild(text);
+        }
+    });
+    
+    document.getElementById('mapYear').textContent = currentYear;
+}
+
+// ===========================================
+// MINI MAP
+// ===========================================
+function renderMiniMap() {
+    const svg = document.getElementById('miniMapSvg');
+    svg.innerHTML = '';
+    
+    const yearData = getDataForYear(currentYear);
+    
+    Object.entries(zipRegions).forEach(([zip, pathData]) => {
+        const data = yearData.find(d => d.zip === zip);
+        const path = document.createElementNS('http://www.w3.org/2000/svg', 'path');
+        path.setAttribute('d', pathData);
+        path.setAttribute('class', 'zip-region' + (zip === selectedZip ? ' selected' : ''));
+        
+        if (data) {
+            const value = getValue(data, currentIndicator);
+            path.setAttribute('fill', getColor(value, currentIndicator));
+        }
+        
+        path.addEventListener('click', () => selectZip(zip));
+        path.addEventListener('mouseenter', () => {
+            if (data) updatePanel(data);
+        });
+        
+        svg.appendChild(path);
+    });
+}
+
+// ===========================================
+// PANEL UPDATE
+// ===========================================
+function updatePanel(data) {
+    document.getElementById('zipDisplay').textContent = data.zip;
+    document.getElementById('neighborhoodDisplay').textContent = data.name;
+    document.getElementById('popDisplay').textContent = data.population.toLocaleString();
+    document.getElementById('cliDisplay').textContent = data.cli.toFixed(1) + '%';
+    document.getElementById('edValue').textContent = data.early_death.toFixed(2);
+    document.getElementById('odValue').textContent = data.overdose.toFixed(2);
+    document.getElementById('homValue').textContent = data.homicide.toFixed(2);
+    document.getElementById('shootValue').textContent = data.shooting.toFixed(2);
+    document.getElementById('hospValue').textContent = data.hospital.toFixed(2);
+    document.getElementById('fosterValue').textContent = data.foster.toFixed(2);
+    document.getElementById('schoolValue').textContent = data.schools;
+}
+
+function selectZip(zip) {
+    selectedZip = zip;
+    const data = getZipData(zip, currentYear);
+    if (data) {
+        updatePanel(data);
+        renderMap();
+        renderMiniMap();
+        if (currentTrendView === 'ziptrend') {
+            updateTrendsChart();
+        }
+    }
+}
+
+// ===========================================
+// TRENDS CHART
+// ===========================================
+function updateTrendsChart() {
+    const ctx = document.getElementById('trendsChart').getContext('2d');
+    
+    if (trendsChart) trendsChart.destroy();
+    
+    let datasets = [];
+    let labels = cityTrends.map(d => d.year);
+    
+    if (currentTrendView === 'citywide') {
+        datasets = [
+            { label: 'Homicides', data: cityTrends.map(d => d.homicides), borderColor: '#e63946', backgroundColor: 'rgba(230,57,70,0.1)', fill: true, tension: 0.3 },
+            { label: 'Overdoses', data: cityTrends.map(d => d.overdoses), borderColor: '#81b29a', backgroundColor: 'rgba(129,178,154,0.1)', fill: true, tension: 0.3 },
+            { label: 'Non-Fatal Shootings', data: cityTrends.map(d => d.shootings), borderColor: '#4a9eff', backgroundColor: 'rgba(74,158,255,0.1)', fill: true, tension: 0.3 }
+        ];
+    } else if (currentTrendView === 'ziptrend') {
+        const zipHistory = getZipHistory(selectedZip);
+        labels = zipHistory.map(d => d.year);
+        datasets = [
+            { label: 'CLI Score', data: zipHistory.map(d => d.cli), borderColor: '#e07a5f', backgroundColor: 'rgba(224,122,95,0.2)', fill: true, tension: 0.3, yAxisID: 'y' },
+            { label: 'Shootings (per 1K)', data: zipHistory.map(d => d.shooting), borderColor: '#4a9eff', fill: false, tension: 0.3, yAxisID: 'y1' },
+            { label: 'Foster Care (per 1K)', data: zipHistory.map(d => d.foster), borderColor: '#81b29a', fill: false, tension: 0.3, yAxisID: 'y1' }
+        ];
+    } else if (currentTrendView === 'cumulative') {
+        let cumH = 0, cumO = 0, cumS = 0;
+        const cumData = cityTrends.map(d => { cumH += d.homicides; cumO += d.overdoses; cumS += d.shootings; return { year: d.year, h: cumH, o: cumO, s: cumS }; });
+        datasets = [
+            { label: 'Cumulative Homicides', data: cumData.map(d => d.h), borderColor: '#e63946', fill: false, tension: 0.3 },
+            { label: 'Cumulative Overdoses', data: cumData.map(d => d.o), borderColor: '#81b29a', fill: false, tension: 0.3 },
+            { label: 'Cumulative Shootings', data: cumData.map(d => d.s), borderColor: '#4a9eff', fill: false, tension: 0.3 }
+        ];
+    } else if (currentTrendView === 'yoy') {
+        const yoyData = [];
+        for (let i = 1; i < cityTrends.length; i++) {
+            const prev = cityTrends[i-1], curr = cityTrends[i];
+            yoyData.push({
+                year: curr.year,
+                h: prev.homicides > 0 ? ((curr.homicides - prev.homicides) / prev.homicides * 100) : 0,
+                o: prev.overdoses > 0 ? ((curr.overdoses - prev.overdoses) / prev.overdoses * 100) : 0,
+                s: prev.shootings > 0 ? ((curr.shootings - prev.shootings) / prev.shootings * 100) : 0
+            });
+        }
+        labels = yoyData.map(d => d.year);
+        datasets = [
+            { label: 'Homicides % Change', data: yoyData.map(d => d.h.toFixed(1)), borderColor: '#e63946', fill: false, tension: 0.3 },
+            { label: 'Overdoses % Change', data: yoyData.map(d => d.o.toFixed(1)), borderColor: '#81b29a', fill: false, tension: 0.3 },
+            { label: 'Shootings % Change', data: yoyData.map(d => d.s.toFixed(1)), borderColor: '#4a9eff', fill: false, tension: 0.3 }
+        ];
+    }
+    
+    const scales = {
+        y: { beginAtZero: true, grid: { color: 'rgba(255,255,255,0.05)' }, ticks: { color: '#8899aa', font: { size: 10 } } },
+        x: { grid: { display: false }, ticks: { color: '#8899aa', font: { size: 10 } } }
+    };
+    
+    if (currentTrendView === 'ziptrend') {
+        scales.y1 = { position: 'right', beginAtZero: true, grid: { display: false }, ticks: { color: '#8899aa', font: { size: 10 } } };
+    }
+    
+    trendsChart = new Chart(ctx, {
+        type: 'line',
+        data: { labels, datasets },
+        options: {
+            responsive: true,
+            maintainAspectRatio: false,
+            interaction: { intersect: false, mode: 'index' },
+            plugins: {
+                legend: { position: 'top', labels: { color: '#e8eef4', usePointStyle: true, padding: 12, font: { size: 10 } } },
+                tooltip: { backgroundColor: 'rgba(20,34,56,0.95)', titleColor: '#e8eef4', bodyColor: '#e8eef4', borderColor: 'rgba(255,255,255,0.1)', borderWidth: 1 }
+            },
+            scales
+        }
+    });
+}
+
+// ===========================================
+// EVENT HANDLERS
+// ===========================================
+document.getElementById('yearSlider').addEventListener('input', (e) => {
+    currentYear = parseInt(e.target.value);
+    document.getElementById('yearDisplay').textContent = currentYear;
+    renderMap();
+    renderMiniMap();
+    const data = getZipData(selectedZip, currentYear);
+    if (data) updatePanel(data);
+});
+
+document.getElementById('playBtn').addEventListener('click', () => {
+    const btn = document.getElementById('playBtn');
+    const slider = document.getElementById('yearSlider');
+    
+    if (isPlaying) {
+        clearInterval(playInterval);
+        isPlaying = false;
+        btn.textContent = '▶ Play';
+        btn.classList.remove('playing');
+    } else {
+        isPlaying = true;
+        btn.textContent = '⏹ Stop';
+        btn.classList.add('playing');
+        
+        if (currentYear >= 2023) currentYear = 2014;
+        
+        playInterval = setInterval(() => {
+            currentYear++;
+            if (currentYear > 2023) currentYear = 2015;
+            slider.value = currentYear;
+            document.getElementById('yearDisplay').textContent = currentYear;
+            renderMap();
+            renderMiniMap();
+            const data = getZipData(selectedZip, currentYear);
+            if (data) updatePanel(data);
+        }, 1000);
+    }
+});
+
+document.querySelectorAll('.indicator-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.indicator-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentIndicator = btn.dataset.indicator;
+        renderMap();
+        renderMiniMap();
+    });
+});
+
+document.querySelectorAll('.trend-view-btn').forEach(btn => {
+    btn.addEventListener('click', () => {
+        document.querySelectorAll('.trend-view-btn').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        currentTrendView = btn.dataset.view;
+        updateTrendsChart();
+    });
+});
+
+// ===========================================
+// INIT
+// ===========================================
+renderMap();
+renderMiniMap();
+const initialData = getZipData(selectedZip, currentYear);
+if (initialData) updatePanel(initialData);
+updateTrendsChart();
+</script>
+</body>
+</html>
