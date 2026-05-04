@@ -1,5 +1,7 @@
 # Community Loss and Hope Index Dashboard
 
+**[View Live Dashboard](https://merctwain.github.io/clhi-dashboard/)**
+
 A data visualization dashboard mapping community grief and loss indicators across Philadelphia ZIP codes.
 
 **Developed by the [Wealth + Work Futures Lab](https://wealthworkfutures.org) at Drexel University's Lindy Institute for Urban Innovation**
@@ -88,3 +90,7 @@ Wealth + Work Futures Lab
 Lindy Institute for Urban Innovation
 Drexel University
 [wealthworkfutures.org](https://wealthworkfutures.org)
+
+---
+
+<sub>Built with [Claude Code](https://claude.ai/claude-code) (AI pair programming) by the WWFL volunteer data team.</sub>
